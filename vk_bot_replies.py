@@ -17,3 +17,31 @@ class VkBotReplies:
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти?')
+
+    def ask_for_location(self, send_to):
+        keyboard = '''{
+            "one_time": true,
+            "buttons": [
+                [{
+                    "action": {
+                        "type": "location",
+                        "payload": "{\\"button\\": \\"1\\"}"
+                    }
+                }],
+                [
+                    {
+                        "action": {
+                            "type": "text",
+                            "payload": "{\\"button\\": \\"2\\"}",
+                            "label": "Указать город"
+                        },
+                        "color": "primary"
+                    }
+                ]
+            ]
+        }'''
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message='Укажите свой город или отправьте местоположение, '
+                                      'чтобы я нашёл ближайшие аптеки.',
+                              keyboard=keyboard)

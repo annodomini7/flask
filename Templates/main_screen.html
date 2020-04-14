@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Профили аптек</h1>
+{%for el in data%}
+<h3>Профиль</h3>
+<h4>{{el['name']}}</h4>
+<p>City: {{el['city']}}</p>
+<p>Address: {{el['address']}}</p>
+<p>Hours of work: {{el['hours']}}</p>
+<p>Phone: {{el['phone']}}</p>
+{%endfor%}
+{% endblock %}

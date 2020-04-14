@@ -1,15 +1,24 @@
 from flask import Flask, make_response, jsonify, redirect, render_template
 from flask_restful import reqparse, abort, Api, Resource
-
+from flask_login import current_user, LoginManager, logout_user, login_required, login_user
 from data import db_session
 from data.pharmacy import Pharmacy
 from data.data import Data
 from data.medicine import Medicine
 from register_form import RegisterForm
+from loginform import LoginForm
 
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
+
+
+@login_manager.user_loader
+def load_user(pharmacy_id):
+    session = db_session.create_session()
+    return session.query(Pharmacy).get(pharmacy_id)
 
 
 def main():
@@ -24,16 +33,6 @@ def main():
     # session.add(user)
     # session.commit()
     app.run()
-    # api.add_resource(users_resources.UsersListResource, '/api/v2/users')
-    # api.add_resource(users_resources.UsersResource, '/api/v2/users/<int:user_id>')
-    # api.add_resource(job_resources.JobsListResource, '/api/v2/jobs')
-    # api.add_resource(job_resources.JobsResource, '/api/v2/jobs/<int:user_id>')
-    #
-    # @app.errorhandler(404)
-    # def not_found(error):
-    #     return make_response(jsonify({'error': 'Not found'}), 404)
-    #
-    # app.run(port=8080, host='127.0.0.1')
 
 
 @app.route('/register', methods=['GET', 'POST'])

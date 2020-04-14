@@ -62,5 +62,94 @@ def reqister():
     return render_template('register.html', title='Регистрация', form=form)
 
 
+@app.route('/data/<int:pharmacy_id>', methods=['POST'])  # функция-обработчик поступающих json-запросов
+def data_post(pharmacy_id):
+    data = request.get_json()
+    session = db_session.create_session()
+    pharm = session.query(Pharmacy).get(pharmacy_id)
+    if not pharm:
+        return jsonify({'error': 404})
+    if pharm.check_password(data["password"]) is False:
+        return jsonify({'error': 403})
+    for el in data["data"]:
+        new = Data()
+        new.pharmacy_id = pharmacy_id
+        new.medicine_id = el["medicine_id"]
+        new.cost = el["cost"]
+        new.number = el["number"]
+        session.add(new)
+        session.commit()
+    return jsonify({'success': 'OK'})
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        user = session.query(Pharmacy).filter(Pharmacy.name == form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect("/")
+        return render_template('login.html',
+                               message="Неправильный логин или пароль",
+                               form=form)
+    return render_template('login.html', title='Авторизация', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
+
+@app.route('/profile_edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_profile(id):
+    form = RegisterForm()
+    if request.method == "GET":
+        session = db_session.create_session()
+        pharm = session.query(Pharmacy).filter(Pharmacy.id == id,
+                                               Pharmacy.user == current_user).first()
+        if pharm:
+            form.name.data = pharm.name
+            form.city.data = pharm.city
+            form.address.data = pharm.address
+            form.hours.data = pharm.hours
+            form.phone.data = pharm.phone
+            form.password.data = ''
+            form.password_again.data = ''
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        pharm = session.query(Pharmacy).filter(Pharmacy.id == id,
+                                               Pharmacy.user == current_user).first()
+        if pharm:
+            pharm.name = form.name.data
+            pharm.city = form.city.data
+            pharm.address = form.address.data
+            pharm.hours = form.hours.data
+            pharm.phone = form.phone.data
+            pharm.set_password(form.password.data)
+            session.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return render_template('register.html', title='Редактирование профиля', form=form)
+
+
+@app.route('/')
+def main_screen():
+    session = db_session.create_session()
+    data = []
+    for pharm in session.query(Pharmacy).all():
+        data.append({'name': pharm.name, 'city': pharm.city, 'address': pharm.address, 'hours': pharm.hours,
+                     'phone': pharm.phone})
+
+    return render_template('main_screen.html', title='Профиль', data=data)
+
+
 if __name__ == '__main__':
     main()

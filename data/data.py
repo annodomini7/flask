@@ -15,5 +15,3 @@ class Data(SqlAlchemyBase, UserMixin):
     pharmacy_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("pharmacy.id"))
     pharmacy = orm.relation('Pharmacy')
     medicine = orm.relation('Medicine')
-
-

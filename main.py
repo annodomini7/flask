@@ -6,7 +6,9 @@ from data.pharmacy import Pharmacy
 from data.data import Data
 from data.medicine import Medicine
 from register_form import RegisterForm
-from loginform import LoginForm
+from login_form import LoginForm
+from edit_form import EditForm
+from random import shuffle
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -104,51 +106,59 @@ def logout():
     return redirect("/")
 
 
-@app.route('/profile_edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/profile')
 @login_required
-def edit_profile(id):
-    form = RegisterForm()
+def profile():
+    id = current_user.get_id()
+    session = db_session.create_session()
+    pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
+    return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
+                           hours=pharm.hours, phone=pharm.phone)
+
+
+@app.route('/profile_edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    id = current_user.get_id()
+    form = EditForm()
     if request.method == "GET":
         session = db_session.create_session()
-        pharm = session.query(Pharmacy).filter(Pharmacy.id == id,
-                                               Pharmacy.user == current_user).first()
+        pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
             form.name.data = pharm.name
             form.city.data = pharm.city
             form.address.data = pharm.address
             form.hours.data = pharm.hours
             form.phone.data = pharm.phone
-            form.password.data = ''
-            form.password_again.data = ''
         else:
             abort(404)
     if form.validate_on_submit():
         session = db_session.create_session()
-        pharm = session.query(Pharmacy).filter(Pharmacy.id == id,
-                                               Pharmacy.user == current_user).first()
+        pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
             pharm.name = form.name.data
             pharm.city = form.city.data
             pharm.address = form.address.data
             pharm.hours = form.hours.data
             pharm.phone = form.phone.data
-            pharm.set_password(form.password.data)
             session.commit()
             return redirect('/')
         else:
             abort(404)
-    return render_template('register.html', title='Редактирование профиля', form=form)
+    return render_template('profile_edit.html', title='Редактирование профиля', form=form)
 
 
 @app.route('/')
 def main_screen():
     session = db_session.create_session()
     data = []
-    for pharm in session.query(Pharmacy).all():
+    pharmacy = session.query(Pharmacy).all()
+    shuffle(pharmacy)
+    for pharm in pharmacy[:10]:
         data.append({'name': pharm.name, 'city': pharm.city, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 
-    return render_template('main_screen.html', title='Профиль', data=data)
+    return render_template('main_screen.html', title='Главная', data=data)
 
 
 if __name__ == '__main__':

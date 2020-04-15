@@ -16,6 +16,3 @@ class Medicine(SqlAlchemyBase, UserMixin):
     orm.relation("Data", back_populates='medicine')
     # user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"))
     # user = orm.relation('User')
-
-
-

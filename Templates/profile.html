@@ -2,13 +2,23 @@
 
 {% block content %}
 <h1>Профиль</h1>
-<h4>{{name}}</h4>
-<p>City: {{city}}</p>
-<p>Address: {{address}}</p>
-<p>Hours of work: {{hours}}</p>
-<p>Phone: {{phone}}</p>
+<h4>{{ name }}</h4>
+<table class="table table-bordered">
+    <tr class="table-default">
+        <td>City</td>
+        <td>Address</td>
+        <td>Hours of work</td>
+        <td>Phone</td>
+    </tr>
+    <tr class="table-primary">
+        <td>{{ city }}</td>
+        <td>{{ address }}</td>
+        <td>{{ hours }}</td>
+        <td>{{ phone }}</td>
+    </tr>
+</table>
 <p>
-    <a class="btn btn-primary " href="/logout">Выйти</a>
-    <a class="btn btn-primary " href="/profile_edit">Редактировать профиль</a>
+    <a class="btn btn-outline-danger" href="/logout">Выйти</a>
+    <a class="btn btn-outline-success" href="/profile_edit">Редактировать профиль</a>
 </p>
 {% endblock %}

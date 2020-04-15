@@ -3,11 +3,20 @@
 {% block content %}
 <h1>Профили аптек</h1>
 {%for el in data%}
-<h3>Профиль</h3>
 <h4>{{el['name']}}</h4>
-<p>City: {{el['city']}}</p>
-<p>Address: {{el['address']}}</p>
-<p>Hours of work: {{el['hours']}}</p>
-<p>Phone: {{el['phone']}}</p>
+<table class="table table-bordered">
+    <tr class="table-default">
+        <td>City</td>
+        <td>Address</td>
+        <td>Hours of work</td>
+        <td>Phone</td>
+    </tr>
+    <tr class="table-primary">
+        <td>{{ el['city'] }}</td>
+        <td>{{ el['address'] }}</td>
+        <td>{{ el['hours'] }}</td>
+        <td>{{ el['phone'] }}</td>
+    </tr>
+</table>
 {%endfor%}
 {% endblock %}

@@ -2,21 +2,28 @@
 
 {% block content %}
 <h1>Профили аптек</h1>
-{%for el in data%}
-<h4>{{el['name']}}</h4>
+
 <table class="table table-bordered">
-    <tr class="table-default">
-        <td>City</td>
-        <td>Address</td>
-        <td>Hours of work</td>
-        <td>Phone</td>
+    <thead>
+    <tr class="table-info">
+        <th scope="col">City</th>
+        <th scope="col">Address</th>
+        <th scope="col">Hours of work</th>
+        <th scope="col">Phone</th>
+    </tr>
+    </thead>
+    <tbody>
+    {%for el in data%}
+    <tr>
+        <th colspan="4">{{el['name']}}</th>
     </tr>
     <tr class="table-primary">
-        <td>{{ el['city'] }}</td>
-        <td>{{ el['address'] }}</td>
-        <td>{{ el['hours'] }}</td>
-        <td>{{ el['phone'] }}</td>
+        <td>{{el['city']}}</td>
+        <td>{{el['address']}}</td>
+        <td>{{el['hours']}}</td>
+        <td>{{el['phone']}}</td>
     </tr>
+    {%endfor%}
+    </tbody>
 </table>
-{%endfor%}
 {% endblock %}

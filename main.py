@@ -76,7 +76,7 @@ def data_post(pharmacy_id):
     for el in data["data"]:
         new = Data()
         new.pharmacy_id = pharmacy_id
-        new.medicine_id = el["medicine_id"]
+        new.barcode = el["barcode"]
         new.cost = el["cost"]
         new.number = el["number"]
         session.add(new)

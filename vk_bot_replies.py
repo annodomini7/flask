@@ -8,13 +8,12 @@ class VkBotReplies:
         self.vk = vk_session.get_api()
 
         self.location_keyboard = VkKeyboard(one_time=True)
+        self.location_keyboard.add_location_button(payload={'button': 'location'})
         self.location_keyboard.add_line()
-        self.location_keyboard.add_location_button(payload='location')
-        self.location_keyboard.add_line()
-        self.location_keyboard.add_button('Указать город', payload='wait_for_city')
+        self.location_keyboard.add_button('Указать город', payload={'button': 'wait_for_city'})
 
     def start(self, send_to):    # Первое сообщение, приветствие и вопрос о лекарстве
-        username = self.vk.users.get(user_ids=send_to)['response']['first_name']
+        username = self.vk.users.get(user_ids=send_to)[0]['first_name']
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти?')
@@ -32,3 +31,8 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message='Укажите свой город, '
                                       'чтобы я нашёл ближайшие аптеки.')
+
+    def send_results(self, send_to, info):    # Высылает результат. Пока что работает в тестовом режиме.
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message=f'Вот то, что нам удалось найти!\n{info}')

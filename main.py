@@ -1,5 +1,5 @@
 from flask import Flask, make_response, jsonify, redirect, render_template
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, abort, Api, Resource, request
 from flask_login import current_user, LoginManager, logout_user, login_required, login_user
 from data import db_session
 from data.pharmacy import Pharmacy
@@ -113,7 +113,7 @@ def profile():
     session = db_session.create_session()
     pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
     return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
-                           hours=pharm.hours, phone=pharm.phone)
+                           hours=pharm.hours, phone=pharm.phone, id=id)
 
 
 @app.route('/profile_edit', methods=['GET', 'POST'])
@@ -148,17 +148,28 @@ def edit_profile():
     return render_template('profile_edit.html', title='Редактирование профиля', form=form)
 
 
-@app.route('/')
-def main_screen():
+@app.route('/<city>')
+def main_screen(city):
     session = db_session.create_session()
     data = []
-    pharmacy = session.query(Pharmacy).all()
-    shuffle(pharmacy)
-    for pharm in pharmacy[:10]:
-        data.append({'name': pharm.name, 'city': pharm.city, 'address': pharm.address, 'hours': pharm.hours,
+    pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)
+    for pharm in pharmacy:
+        data.append({'name': pharm.name, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 
-    return render_template('main_screen.html', title='Главная', data=data)
+    return render_template('main_screen.html', title='Главная', data=data, city=city)
+
+
+@app.route('/')
+def super_main_screen():
+    data = ['Владивосток', 'Владикавказ', 'Волгоград', 'Вологда', 'Воронеж', 'Грозный', 'Екатеринбург', 'Казань',
+            'Краснодар', 'Красноярск', 'Магадан', 'Майкоп', 'Махачкала', 'Москва', 'Нальчик', 'Нижний Новгород',
+            'Новосибирск', 'Омск', 'Оренбург', 'Пермь', 'Пятигорск', 'Ростов-на-Дону', 'Рязань', 'Самара',
+            'Санкт-Петербург', 'Саранск', 'Саратов', 'Севастополь', 'Симферополь', 'Смоленск', 'Сочи', 'Ставрополь',
+            'Таганрог', 'Тамбов', 'Томск', 'Тула', 'Тюмень', 'Ульяновск', 'Уфа', 'Челябинск', 'Черкесск', 'Чита',
+            'Элиста', 'Якутск']
+
+    return render_template('super_main_screen.html', title='Главная', data=data)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Города, с которыми мы работаем</h3>
+<table class="table table-bordered">
+    <tbody>
+    {%for el in data%}
+    <tr>
+        <td>
+        <a href="/{{el}}">{{el}}</a>
+        </td>
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+{% endblock %}

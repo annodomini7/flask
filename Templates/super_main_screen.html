@@ -1,16 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h3>Города, с которыми мы работаем</h3>
-<table class="table table-bordered">
-    <tbody>
-    {%for el in data%}
-    <tr>
-        <td>
-        <a href="/{{el}}">{{el}}</a>
-        </td>
-    </tr>
-    {%endfor%}
-    </tbody>
-</table>
+
+
+<article>
+    <div class="card bg-light mb-3">
+        <div class="card-header">Города, с которыми мы работаем</div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+
+                {%for i in range(n)%}
+                <tr>
+                    <td>
+                        <a href="/{{data1[i]}}" class="card-text">{{data1[i]}}</a>
+                    </td>
+                    <td>
+                        <a href="/{{data2[i]}}" class="card-text">{{data2[i]}}</a>
+                    </td>
+                </tr>
+                {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card text-white bg-dark mb-3" style="max-width: 350px;">
+        <div class="card-header">Наши чат-боты</div>
+        <div class="card-body">
+            <p class="card-text">Вы можете написать любому из наших ботов, ввести название интересующего вас препарата и
+                получить информацию об аптеках, в которых вы сможете его купить. </p>
+            <p class="card-text">Чат-бот ВКонтакте: <a href="https://vk.com/pharmabot" target="_blank">@pharmabot</a>
+            </p>
+            <p class="card-text">Чат-бот Telegram: <a>@pharm_bot</a></p>
+        </div>
+    </div>
+</article>
 {% endblock %}

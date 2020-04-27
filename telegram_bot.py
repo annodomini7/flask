@@ -48,7 +48,7 @@ def main():
     REQUEST_KWARGS = {
         'proxy_url': 'socks5://97.74.230.16:31178', }
 
-    updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
+    updater = Updater("", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
     conv_handler = ConversationHandler(

@@ -15,6 +15,15 @@
     {% endfor %}
     </p>
     <p>
+        {{ form.region.label }}<br>
+        {{ form.region(class="form-control") }}<br>
+        {% for error in form.region.errors %}
+    <p class="alert alert-danger" role="alert">
+        {{ error }}
+    </p>
+    {% endfor %}
+    </p>
+    <p>
         {{ form.city.label }}<br>
         {{ form.city(class="form-control") }}<br>
         {% for error in form.city.errors %}

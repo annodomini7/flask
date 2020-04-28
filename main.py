@@ -16,6 +16,18 @@ login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
+CITIES = {'Ставропольский край': ['Буденновск', 'Геогриевск', 'Ессентуки', 'Железноводск', 'Изобильный', 'Ипатово',
+                                  'Кисловодск',
+                                  'Лермонтов', 'Минеральные Воды', 'Михайловск', 'Невинномысск', 'Новопавловск',
+                                  'Пятигорск',
+                                  'Светлоград', 'Ставрополь', 'Зеленокумск'],
+          'Краснодарский край': ['Абинск', 'Адлер', 'Анапа', 'Белореченск', 'Геленджик', 'Горячий Ключ',
+                                 'Кореновск',
+                                 'Краснодар', 'Кропоткин', 'Лабинск', 'Новороссийск', 'Сочи', 'Тимашевск', 'Туапсе'],
+          'Ростовская область': ['Азов', 'Батайск', 'Гуково', 'Зерноград', 'Каменск-Шахтинский ', 'Миллерово',
+                                 'Новочеркасск',
+                                 'Новошахтинск', 'Ростов-на-Дону', 'Сальск', 'Семикаракорск', 'Таганрог', 'Цимлянск']}
+
 
 @login_manager.user_loader
 def load_user(pharmacy_id):
@@ -25,15 +37,6 @@ def load_user(pharmacy_id):
 
 def main():
     db_session.global_init("db/pharmacy.db")
-    # user = Pharmacy()
-    # user.name = "Пользователь 1"
-    # user.city = "биография пользователя 1"
-    # user.address = "adasdad"
-    # user.hours = "10-12"
-    # user.set_password("qwertyuiopasdqw21321312")
-    # session = db_session.create_session()
-    # session.add(user)
-    # session.commit()
     app.run()
 
 
@@ -50,6 +53,11 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
+        if form.region.data in CITIES.keys():
+            if form.city.data not in CITIES[form.region.data]:
+                CITIES[form.region.data].append(form.city.data)
+        else:
+            CITIES[form.region.data] = [form.city.data]
         user = Pharmacy(
             name=form.name.data,
             city=form.city.data,
@@ -95,7 +103,7 @@ def login():
             return redirect("/")
         return render_template('login.html',
                                message="Неправильный логин или пароль",
-                               form=form)
+                               form=form, title='Авторизация')
     return render_template('login.html', title='Авторизация', form=form)
 
 
@@ -148,8 +156,8 @@ def edit_profile():
     return render_template('profile_edit.html', title='Редактирование профиля', form=form)
 
 
-@app.route('/<city>')
-def main_screen(city):
+@app.route('/pharmacy/<city>')
+def pharmacy_screen(city):
     session = db_session.create_session()
     data = []
     pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)
@@ -157,20 +165,19 @@ def main_screen(city):
         data.append({'name': pharm.name, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 
-    return render_template('main_screen.html', title='Главная', data=data, city=city)
+    return render_template('pharmacy_screen.html', title='Аптеки', data=data, city=city)
 
 
 @app.route('/')
-def super_main_screen():
-    data1 = ['Владивосток', 'Владикавказ', 'Волгоград', 'Вологда', 'Воронеж', 'Грозный', 'Екатеринбург', 'Казань',
-             'Краснодар', 'Красноярск', 'Магадан', 'Майкоп', 'Махачкала', 'Москва', 'Нальчик', 'Нижний Новгород',
-             'Новосибирск', 'Омск', 'Оренбург', 'Пермь', 'Пятигорск', 'Ростов-на-Дону']
-    data2 = ['Рязань', 'Самара', 'Санкт-Петербург', 'Саранск', 'Саратов', 'Севастополь', 'Симферополь', 'Смоленск',
-             'Сочи', 'Ставрополь',
-             'Таганрог', 'Тамбов', 'Томск', 'Тула', 'Тюмень', 'Ульяновск', 'Уфа', 'Челябинск', 'Черкесск', 'Чита',
-             'Элиста', 'Якутск']
+def main_screen():
+    data = CITIES.keys()
+    return render_template('main_screen.html', title='Главная', data=data)
 
-    return render_template('super_main_screen.html', title='Главная', data1=data1, data2=data2, n=len(data1))
+
+@app.route('/<region>')
+def city_screen(region):
+    data = CITIES[region]
+    return render_template('city_screen.html', title='Города', data=data, region=region)
 
 
 if __name__ == '__main__':

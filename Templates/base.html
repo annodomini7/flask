@@ -1,12 +1,5 @@
 <!doctype html>
 <html lang="en">
-<style>
-    footer{
-    background-color:#ddd;
-    }
-
-
-</style>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -15,19 +8,20 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
     <link rel="stylesheet"
-          href="static/css/style.css">
+          href="/static/css/style.css">
     <title>{{title}}</title>
+    <link rel="icon" href="/static/img/favicon.png" type="image/png">
 </head>
 <body>
 <header>
     <nav class="navbar navbar-light bg-light">
-        <a class="navbar-brand" href="/">Наше приложение</a>
+        <a class="navbar-brand" href="/">Поиск лекарств</a>
         {% if current_user.is_authenticated %}
         <a class="navbar-brand" href="/profile">{{ current_user.name }}</a>
         {% else %}
         <p>
-            <a class="btn btn-primary " href="/register">Зарегистрироваться</a>
-            <a class="btn btn-primary " href="/login">Войти</a>
+            <a class="btn btn-dark" href="/register">Зарегистрироваться</a>
+            <a class="btn btn-dark" href="/login">Войти</a>
         </p>
         {%endif%}
     </nav>
@@ -38,10 +32,10 @@
 </main>
 <footer class="footer">
     <div class="container-fluid p-3 p-md-5">
-        <p>Тут должно быть что-то умное и полезное</p>
+        <p class="footer-author">Тут должно быть что-то умное и полезное</p>
+        <p class="footer-author"><br>UPD: Акобян Наира: Разработчик [УДАЛЕНО];<br>Коган Анна: Разработчик █████;<br>
+            Матевосян Артем: разработчик [ДАННЫЕ УДАЛЕНЫ].</p>
     </div>
 </footer>
-
 </body>
-
 </html>

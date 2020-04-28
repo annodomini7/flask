@@ -48,7 +48,7 @@ def x():
         session.commit()
 
 
-city = ['Челябинск', 'Уфа', 'Ульяновск', 'Красноярск', 'Новосибирск', 'Нижний Новгород', 'Рязань', 'Тамбов']
+city = ['Зеленокумск']
 for toponym_to_find in city:
     geocoder_api_server = "http://geocode-maps.yandex.ru/1.x/"
 

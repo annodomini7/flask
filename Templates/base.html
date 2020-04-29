@@ -17,11 +17,15 @@
     <nav class="navbar navbar-light bg-light">
         <a class="navbar-brand" href="/">Поиск лекарств</a>
         {% if current_user.is_authenticated %}
-        <a class="navbar-brand" href="/profile">{{ current_user.name }}</a>
+        <p>
+            <a class="navbar-brand" href="/profile">{{ current_user.name }}</a>
+            <button class="btn btn-dark button">Справка</button>
+        </p>
         {% else %}
         <p>
             <a class="btn btn-dark" href="/register">Зарегистрироваться</a>
             <a class="btn btn-dark" href="/login">Войти</a>
+            <button class="btn btn-dark button">Справка</button>
         </p>
         {%endif%}
     </nav>
@@ -37,5 +41,6 @@
             Матевосян Артем: разработчик [ДАННЫЕ УДАЛЕНЫ].</p>
     </div>
 </footer>
+<script src="/static/js/script.js"></script>
 </body>
 </html>

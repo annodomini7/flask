@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="card-group">
+    <div class="card bg-light mb-3">
+        <div class="card-header">Регионы, с которыми мы работаем</div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                {%for i in data%}
+                <tr>
+                    <td>
+                        <a href="/{{i}}" class="card-text">{{i}}</a>
+                    </td>
+                </tr>
+                {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card text-white bg-dark mb-3" style="max-width: 350px;">
+        <div class="card-header">Наши чат-боты</div>
+        <div class="card-body">
+            <p class="card-text">Вы можете написать любому из наших ботов, ввести название интересующего вас препарата и
+                получить информацию об аптеках, в которых вы сможете его купить. <br><br>Мы сообщаем инфрмацию о препаратах для
+                лечения заболевания респираторной системы (по классификации АТХ)</p>
+            <p class="card-text">Чат-бот ВКонтакте: <a href="https://vk.com/pharmabot" target="_blank">@pharmabot</a>
+            </p>
+            <p class="card-text">Чат-бот Telegram: <a>@pharm_bot</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

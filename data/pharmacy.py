@@ -10,12 +10,12 @@ class Pharmacy(SqlAlchemyBase, UserMixin):
     __tablename__ = 'pharmacy'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    city = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    address = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    hours = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    phone = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    city = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    hours = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    phone = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     orm.relation("Data", back_populates='pharmacy')
 
     def set_password(self, password):

@@ -1,5 +1,5 @@
 import random
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+from vk_api.keyboard import VkKeyboard
 
 
 class VkBotReplies:
@@ -16,7 +16,8 @@ class VkBotReplies:
         username = self.vk.users.get(user_ids=send_to)[0]['first_name']
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти?')
+                              message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти? '
+                              f'Напишите его название с заглавной буквы кириллицей.')
 
     def ask_for_location(self, send_to):    # Запрос местоположения или запрос города - зависит от выбора пользователя
         keyboard = self.location_keyboard.get_keyboard()
@@ -37,7 +38,7 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Вот то, что нам удалось найти!\n{info}')
 
-    def return_error(self, send_to, error):    # Метод отладки, присылает ошибки
+    def return_msg(self, send_to, msg):    # Метод, присылающий пользователю любое сообщение (msg)
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Произошла ошибка :(\n{error}')
+                              message=f'{msg}')

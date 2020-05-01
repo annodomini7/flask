@@ -37,17 +37,6 @@ def sqlite_nocase_collation(value1_, value2_):
            (value1_.encode('utf-8').lower() > value2_.encode('utf-8').lower())
 
 
-def database_search(cursor, entity, **info):
-    request = f'SELECT * FROM {entity}'
-    if info:
-        request += '\nWHERE '
-        request += ' AND '.join(f'{key} = "{value}"' for key, value in info.items())
-    try:
-        return cursor.execute(request).fetchall()
-    except sqlite3.OperationalError:
-        return None
-
-
 class User:    # Класс, экземпляры которого будут хранить информацию о пользователе и его текущем поиске
     def __init__(self, user_id):
         self.user_id = user_id
@@ -76,15 +65,41 @@ def message_handler(token, vk_id):
         if event.type == VkBotEventType.MESSAGE_NEW:
             user_id = event.object.message['from_id']
             msg = event.object.message
-            try:    # пользователь только начал диалог?
+            try:
+                # пользователь только начал диалог?
                 if users.get(user_id, None) is None:
                     users[user_id] = User(user_id)
                     bot.start(user_id)
                     users[user_id].status = 'waiting_for_medicine'
                 # пользователь отправил название медикамента?
                 elif users[user_id].status == 'waiting_for_medicine':
-                    if database_search(cur, 'medicine', name=msg['text']):
-                        users[user_id].req_medicine = msg['text']
+                    try:
+                        users[user_id].req_medicine = cur.execute(f'''SELECT DISTINCT name FROM medicine
+                        WHERE LOWER(medicine.name) LIKE LOWER('%{msg['text']}%')''').fetchall()
+                    except sqlite3.OperationalError:
+                        bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
+                                                'Проверьте написание и попробуйте ещё раз.')
+                    else:
+                        if len(users[user_id].req_medicine) > 1:
+                            bot.clarify_name(user_id, users[user_id].req_medicine)
+                            users[user_id].status = 'waiting_for_clarification'
+                        elif (('location' in event.obj.client_info['button_actions'] and
+                             'text' in event.obj.client_info['button_actions'])):
+                            bot.ask_for_location(user_id)
+                            users[user_id].status = 'waiting_for_location'
+                        else:
+                            bot.ask_city(user_id)
+                            users[user_id].status = 'waiting_for_city'
+                elif users[user_id].status == 'waiting_for_clarification':
+                    try:
+                        clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
+                        WHERE name = "{msg['text']}"''').fetchone()
+                    except sqlite3.OperationalError:
+                        bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
+                                                'Попробуйте ещё раз, выберите одно из названий на клавиатуре.')
+                        bot.clarify_name(user_id, users[user_id].req_medicine)
+                    else:
+                        users[user_id].req_medicine = clarification
                         if (('location' in event.obj.client_info['button_actions'] and
                              'text' in event.obj.client_info['button_actions'])):
                             bot.ask_for_location(user_id)
@@ -92,9 +107,6 @@ def message_handler(token, vk_id):
                         else:
                             bot.ask_city(user_id)
                             users[user_id].status = 'waiting_for_city'
-                    else:
-                        bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
-                                                'Укажите его ещё раз.')
                 # пользователь отправил местоположение?
                 elif users[user_id].status == 'waiting_for_location' and 'location' in msg['payload']:
                     users[user_id].geo = msg['geo']

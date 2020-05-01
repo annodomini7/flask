@@ -73,33 +73,33 @@ def message_handler(token, vk_id):
                     users[user_id].status = 'waiting_for_medicine'
                 # пользователь отправил название медикамента?
                 elif users[user_id].status == 'waiting_for_medicine':
-                    try:
-                        users[user_id].req_medicine = cur.execute(f'''SELECT DISTINCT name FROM medicine
-                        WHERE LOWER(medicine.name) LIKE LOWER('%{msg['text']}%')''').fetchall()
-                    except sqlite3.OperationalError:
+                    db_request_result = cur.execute(f'''SELECT DISTINCT name FROM medicine
+                                                        WHERE LOWER(medicine.name) LIKE
+                                                        LOWER('%{msg['text']}%')''').fetchall()
+                    if not db_request_result:
                         bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
                                                 'Проверьте написание и попробуйте ещё раз.')
                     else:
+                        users[user_id].req_medicine = list(map(lambda x: x[0], db_request_result))
                         if len(users[user_id].req_medicine) > 1:
                             bot.clarify_name(user_id, users[user_id].req_medicine)
                             users[user_id].status = 'waiting_for_clarification'
                         elif (('location' in event.obj.client_info['button_actions'] and
-                             'text' in event.obj.client_info['button_actions'])):
+                               'text' in event.obj.client_info['button_actions'])):
                             bot.ask_for_location(user_id)
                             users[user_id].status = 'waiting_for_location'
                         else:
                             bot.ask_city(user_id)
                             users[user_id].status = 'waiting_for_city'
                 elif users[user_id].status == 'waiting_for_clarification':
-                    try:
-                        clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
-                        WHERE name = "{msg['text']}"''').fetchone()
-                    except sqlite3.OperationalError:
+                    clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
+                    WHERE name = "{msg['text']}"''').fetchone()
+                    if clarification is None:
                         bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
                                                 'Попробуйте ещё раз, выберите одно из названий на клавиатуре.')
                         bot.clarify_name(user_id, users[user_id].req_medicine)
                     else:
-                        users[user_id].req_medicine = clarification
+                        users[user_id].req_medicine = clarification[0]
                         if (('location' in event.obj.client_info['button_actions'] and
                              'text' in event.obj.client_info['button_actions'])):
                             bot.ask_for_location(user_id)
@@ -110,7 +110,7 @@ def message_handler(token, vk_id):
                 # пользователь отправил местоположение?
                 elif users[user_id].status == 'waiting_for_location' and 'location' in msg['payload']:
                     users[user_id].geo = msg['geo']
-                    bot.send_results(user_id, users[user_id])
+                    bot.send_results(user_id, users[user_id].__dict__)
                     del users[user_id]
                 # пользователь нажал "Указать город"?
                 elif users[user_id].status == 'waiting_for_location' and 'указать город' in msg['text'].lower():
@@ -119,7 +119,7 @@ def message_handler(token, vk_id):
                 # пользователь указал сам город?
                 elif users[user_id].status == 'waiting_for_city':
                     users[user_id].city = msg['text']
-                    bot.send_results(user_id, users[user_id])
+                    bot.send_results(user_id, users[user_id].__dict__)
                     del users[user_id]
             except Exception as e:
                 bot.return_msg(user_id, e)

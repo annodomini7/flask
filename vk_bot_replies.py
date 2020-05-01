@@ -17,7 +17,18 @@ class VkBotReplies:
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти? '
-                              f'Напишите его название с заглавной буквы кириллицей.')
+                              f'Напишите его название кириллицей.')
+
+    def clarify_name(self, send_to, names):
+        self.clarify_keyboard = VkKeyboard(one_time=True)
+        self.clarify_keyboard.add_button(names.pop(0))
+        for name in names:
+            self.clarify_keyboard.add_line()
+            self.clarify_keyboard.add_button(name)
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message='Я нашёл несколько лекарств в базе данных. Выберите то, которое вы ищете.',
+                              keyboard=self.clarify_keyboard.get_keyboard())
 
     def ask_for_location(self, send_to):    # Запрос местоположения или запрос города - зависит от выбора пользователя
         keyboard = self.location_keyboard.get_keyboard()

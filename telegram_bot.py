@@ -170,7 +170,7 @@ def main():
     REQUEST_KWARGS = {
         'proxy_url': 'socks5://85.10.235.14:1080', }
 
-    updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
+    updater = Updater("", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
     conv_handler = ConversationHandler(

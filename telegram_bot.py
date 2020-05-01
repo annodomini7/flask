@@ -1,6 +1,6 @@
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CallbackContext, CommandHandler, ConversationHandler
-from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, PhotoSize
+from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import ReplyKeyboardRemove
 from random import randint
 import requests
@@ -35,7 +35,7 @@ def sqlite_nocase_collation(value1_, value2_):
             value1_.encode('utf-8').lower() > value2_.encode('utf-8').lower())
 
 
-def work(name):
+def medicine_ask(name):
     con = sqlite3.connect("db/pharmacy.db")
     con.create_collation("BINARY", sqlite_nocase_collation)
     con.create_collation("NOCASE", sqlite_nocase_collation)
@@ -51,59 +51,118 @@ def work(name):
     return result
 
 
-#  print(work('лазолван'))
+def pharmacy_ask(city):
+    con = sqlite3.connect("db/pharmacy.db")
+    con.create_collation("BINARY", sqlite_nocase_collation)
+    con.create_collation("NOCASE", sqlite_nocase_collation)
+    con.create_function("LIKE", 2, sqlite_like)
+    con.create_function("UPPER", 1, sqlite_upper)
+    cur = con.cursor()
+    result = cur.execute(
+        f"""select id, name, address, hours, phone, phone
+        from pharmacy
+        where UPPER(pharmacy.city) LIKE UPPER('%{city}%')""").fetchall()
+    return result
+
+
+def data_ask(pharmacy_id, barcode):
+    con = sqlite3.connect("db/pharmacy.db")
+    con.create_collation("BINARY", sqlite_nocase_collation)
+    con.create_collation("NOCASE", sqlite_nocase_collation)
+    con.create_function("LIKE", 2, sqlite_like)
+    con.create_function("UPPER", 1, sqlite_upper)
+    cur = con.cursor()
+    result = cur.execute(
+        f"""select pharmacy_id, cost
+            from data
+            where data.barcode = {barcode}
+            and data.pharmacy_id in {pharmacy_id}""").fetchall()
+    return list(set(result))
 
 
 def start(update, context):
+    user = update.message.from_user.first_name
     update.message.reply_text(
-        "Здравствуйте! Какой препарат вам необходимо найти? Напишите его название с заглавной буквы кириллицей.")
+        f"Здравствуйте, {user}! Какой препарат вам необходимо найти? Напишите его название кириллицей. "
+        "В любой момент можете ввести /stop для прекращения опроса.")
+    context.user_data['log'] = True
     return 1
 
 
 def name(update, context):
     context.user_data['name'] = update.message.text
-    print(update.message.text)
-    result = work(update.message.text)
-    context.user_data['result'] = result
+    result = medicine_ask(update.message.text)
     if result == []:
-        update.message.reply_text('К сожалению такого лекарства нет в нашей базе. Попробуйте ввести другое название.')
+        update.message.reply_text('Извините, такого лекарства в моей базе нет, проверьте правильность написания. '
+                                  'Если всё верно, значит я с этим препаратом не работаю :(')
         return 1
-    form = '\n'.join(list(set([el[2] for el in result])))
-    update.message.reply_text(f"Выберите одну из известных нам форм выпуска и введите ее название: \n{form}")
+    names = set([el[1] for el in result])
+    if len(names) > 1:
+        if context.user_data['log']:
+            context.user_data['log'] = False
+            reply_keyboard = [[el] for el in names]
+            update.message.reply_text(
+                "В нашей базе есть несколько препаратов с подходящими названиями. Выберите нужный Вам:",
+                reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+            return 1
+        result = list(filter(lambda x: x[1].lower() == context.user_data['name'].lower(), result))
+
+    context.user_data['result'] = result
+    reply_keyboard = [[el] for el in list(set([el[2] for el in result]))]
+    update.message.reply_text("Выберите одну из известных нам форм выпуска:",
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return 2
 
 
 def form(update, context):
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
-    context.user_data['result'] = result
     if result == []:
-        update.message.reply_text('incorrect form')
+        update.message.reply_text(
+            'Нажмите клавишу на появившейся клавиатуре и выберите необходимую форму выпуска товара.')
         return 2
-    dose = '\n'.join(list(set([el[3] for el in result])))
-    update.message.reply_text(f"Выберите одну из известных нам доз и введите ее название: \n{dose}")
+    context.user_data['result'] = result
+    reply_keyboard = [[el] for el in list(set([el[3] for el in result]))]
+    update.message.reply_text(f"Выберите одну из известных нам доз:",
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return 3
 
 
 def dose(update, context):
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
-    context.user_data['result'] = result
     if result == []:
         update.message.reply_text('incorrect dose')
         return 3
+    context.user_data['result'] = result
     print(result)
-    update.message.reply_text(f"Введите ваш город")
+    update.message.reply_text(f"Введите ваш город", reply_markup=ReplyKeyboardRemove())
     return 4
 
 
 def city(update, context):
     context.user_data['city'] = update.message.text
-    update.message.reply_text(f"{context.user_data['city']}")
+    result = pharmacy_ask(context.user_data['city'])
+    if result == []:
+        update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
+                                  f"Если всё верно, значит я с этим городом не работаю :(")
+        return 4
+    print(result)
+    pharmacy_id = [el[0] for el in result]
+    costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
+    answer = []
+    for el in costs:
+        s = list(filter(lambda x: x[0] == el[0], result))
+        s = [*s[0], el[1]]
+        print(s)
+        answer.append(s)
+    print(answer)
+    update.message.reply_text(f"{answer}")
     return ConversationHandler.END
 
 
 def stop(update, context):
+    update.message.reply_text("Всего доброго")
     return ConversationHandler.END
 
 
@@ -115,12 +174,8 @@ def main():
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
     conv_handler = ConversationHandler(
-        # Точка входа в диалог.
-        # В данном случае — команда /start. Она задаёт первый вопрос.
         entry_points=[CommandHandler('start', start)],
 
-        # Состояние внутри диалога.
-        # Вариант с двумя обработчиками, фильтрующими текстовые сообщения.
         states={
             1: [MessageHandler(Filters.text, name, pass_user_data=True)],
             2: [MessageHandler(Filters.text, form, pass_user_data=True)],
@@ -128,7 +183,6 @@ def main():
             4: [MessageHandler(Filters.text, city, pass_user_data=True)]
         },
 
-        # Точка прерывания диалога. В данном случае — команда /stop.
         fallbacks=[CommandHandler('stop', stop)]
     )
     dp.add_handler(conv_handler)

@@ -48,9 +48,17 @@ def database_search(cursor, entity, **info):
         return None
 
 
+class User:    # Класс, экземпляры которого будут хранить информацию о пользователе и его текущем поиске
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.status = None
+        self.req_medicine = None
+        self.geo = None
+        self.city = None
+
+
 def message_handler(token, vk_id):
-    users = dict()
-    users_info = dict()
+    users = dict()    # в этом словаре будут храниться экземпляры класса User, ключами будут ID
 
     vk_session = vk_api.VkApi(token=token)
     bot = VkBotReplies(vk_session)
@@ -69,46 +77,42 @@ def message_handler(token, vk_id):
             user_id = event.object.message['from_id']
             msg = event.object.message
             try:    # пользователь только начал диалог?
-                if users.get(user_id, 'not_started') == 'not_started':
-                    users_info[user_id] = dict()
+                if users.get(user_id, None) is None:
+                    users[user_id] = User(user_id)
                     bot.start(user_id)
-                    users[user_id] = 'waiting_for_medicine'
+                    users[user_id].status = 'waiting_for_medicine'
                 # пользователь отправил название медикамента?
-                elif users[user_id] == 'waiting_for_medicine':
+                elif users[user_id].status == 'waiting_for_medicine':
                     if database_search(cur, 'medicine', name=msg['text']):
-                        users_info[user_id]['req_medicine'] = msg['text']
+                        users[user_id].req_medicine = msg['text']
                         if (('location' in event.obj.client_info['button_actions'] and
                              'text' in event.obj.client_info['button_actions'])):
                             bot.ask_for_location(user_id)
-                            users[user_id] = 'waiting_for_location'
+                            users[user_id].status = 'waiting_for_location'
                         else:
                             bot.ask_city(user_id)
-                            users[user_id] = 'waiting_for_city'
+                            users[user_id].status = 'waiting_for_city'
                     else:
                         bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
                                                 'Укажите его ещё раз.')
                 # пользователь отправил местоположение?
-                elif users[user_id] == 'waiting_for_location' and 'location' in msg['payload']:
-                    users_info[user_id]['geo'] = msg['geo']
+                elif users[user_id].status == 'waiting_for_location' and 'location' in msg['payload']:
+                    users[user_id].geo = msg['geo']
+                    bot.send_results(user_id, users[user_id])
                     del users[user_id]
-                    bot.send_results(user_id, users_info[user_id])
-                    del users_info[user_id]
                 # пользователь нажал "Указать город"?
-                elif users[user_id] == 'waiting_for_location' and 'указать город' in msg['text'].lower():
+                elif users[user_id].status == 'waiting_for_location' and 'указать город' in msg['text'].lower():
                     bot.ask_city(user_id)
-                    users[user_id] = 'waiting_for_city'
+                    users[user_id].status = 'waiting_for_city'
                 # пользователь указал сам город?
-                elif users[user_id] == 'waiting_for_city':
-                    users_info[user_id]['city'] = msg['text']
+                elif users[user_id].status == 'waiting_for_city':
+                    users[user_id].city = msg['text']
+                    bot.send_results(user_id, users[user_id])
                     del users[user_id]
-                    bot.send_results(user_id, users_info[user_id])
-                    del users_info[user_id]
             except Exception as e:
                 bot.return_msg(user_id, e)
                 if not users.get(user_id, None) is None:
                     del users[user_id]
-                if not users_info.get(user_id, None) is None:
-                    del users_info[user_id]
 
 
 if __name__ == '__main__':

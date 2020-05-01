@@ -4,10 +4,37 @@ from vk_bot_replies import VkBotReplies
 import requests
 import time
 import sqlite3
+import re
 
 
 VK_BOT_ID = 000000000
 VK_BOT_TOKEN = 'token'
+
+
+def sqlite_like(template_, value_):
+    return sqlite_like_escape(template_, value_, None)
+
+
+def sqlite_like_escape(template_, value_, escape_):
+    re_ = re.compile(template_.lower().replace(".", "\\.").replace("^", "\\^")
+                     .replace("$", "\\$").replace("*", "\\*").replace("+", "\\+")
+                     .replace("?", "\\?").replace("{", "\\{").replace("}", "\\}")
+                     .replace("(", "\\(").replace(")", "\\)").replace("[", "\\[")
+                     .replace("]", "\\]").replace("_", ".").replace("%", ".*?"))
+    return re_.match(value_.lower()) is not None
+
+
+def sqlite_lower(value_):
+    return value_.lower()
+
+
+def sqlite_upper(value_):
+    return value_.upper()
+
+
+def sqlite_nocase_collation(value1_, value2_):
+    return (value1_.encode('utf-8').lower() < value2_.encode('utf-8').lower()) -\
+           (value1_.encode('utf-8').lower() > value2_.encode('utf-8').lower())
 
 
 def database_search(cursor, entity, **info):
@@ -30,6 +57,11 @@ def message_handler(token, vk_id):
     longpoll = VkBotLongPoll(vk_session, vk_id)
 
     con = sqlite3.connect('db/pharmacy.db')
+    con.create_collation("BINARY", sqlite_nocase_collation)
+    con.create_collation("NOCASE", sqlite_nocase_collation)
+    con.create_function("LIKE", 2, sqlite_like)
+    con.create_function("LOWER", 1, sqlite_lower)
+    con.create_function("UPPER", 1, sqlite_upper)
     cur = con.cursor()
 
     for event in longpoll.listen():

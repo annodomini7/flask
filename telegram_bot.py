@@ -1,7 +1,7 @@
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CallbackContext, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram import ReplyKeyboardRemove
+from telegram import ReplyKeyboardRemove, ParseMode
 from random import randint
 import requests
 import sqlite3
@@ -92,22 +92,32 @@ def start(update, context):
 def name(update, context):
     context.user_data['name'] = update.message.text
     result = medicine_ask(update.message.text)
+    if context.user_data['log'] is False:
+        result = list(filter(lambda x: x[1].lower() == context.user_data['name'].lower(), result))
+        if result == []:
+            update.message.reply_text(
+                "К сожалению я не понимаю Вас. Выберите нужный препарат на высвечиваемой клавиатуре.")
+            return 1
     if result == []:
         update.message.reply_text('Извините, такого лекарства в моей базе нет, проверьте правильность написания. '
                                   'Если всё верно, значит я с этим препаратом не работаю :(')
         return 1
     names = set([el[1] for el in result])
     if len(names) > 1:
-        if context.user_data['log']:
-            context.user_data['log'] = False
-            reply_keyboard = [[el] for el in names]
-            update.message.reply_text(
-                "В нашей базе есть несколько препаратов с подходящими названиями. Выберите нужный Вам:",
-                reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-            return 1
-        result = list(filter(lambda x: x[1].lower() == context.user_data['name'].lower(), result))
-
+        context.user_data['log'] = False
+        reply_keyboard = [[el] for el in names]
+        update.message.reply_text(
+            "В нашей базе есть несколько препаратов с подходящими названиями. Выберите нужный Вам:",
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        return 1
+    if result[0][1].lower() != update.message.text.lower():
+        reply_keyboard = [[el] for el in names]
+        update.message.reply_text(
+            "Вы имели в виду этот препарат?",
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        return 1
     context.user_data['result'] = result
+    print(result)
     reply_keyboard = [[el] for el in list(set([el[2] for el in result]))]
     update.message.reply_text("Выберите одну из известных нам форм выпуска:",
                               reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
@@ -147,17 +157,18 @@ def city(update, context):
         update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
                                   f"Если всё верно, значит я с этим городом не работаю :(")
         return 4
-    print(result)
+    print(context.user_data['result'])
     pharmacy_id = [el[0] for el in result]
     costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
     answer = []
     for el in costs:
         s = list(filter(lambda x: x[0] == el[0], result))
         s = [*s[0], el[1]]
-        print(s)
         answer.append(s)
     print(answer)
-    update.message.reply_text(f"{answer}")
+    update.message.reply_text(
+        f"{context.user_data['result'][0][1]}, {context.user_data['result'][0][2]}, {context.user_data['result'][0][3]}"
+        f"\n{answer}")
     return ConversationHandler.END
 
 
@@ -170,7 +181,7 @@ def main():
     REQUEST_KWARGS = {
         'proxy_url': 'socks5://85.10.235.14:1080', }
 
-    updater = Updater("", use_context=True,
+    updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
     conv_handler = ConversationHandler(
@@ -186,6 +197,7 @@ def main():
         fallbacks=[CommandHandler('stop', stop)]
     )
     dp.add_handler(conv_handler)
+
     updater.start_polling()
     print('Бот начал свою работу......')
     updater.idle()

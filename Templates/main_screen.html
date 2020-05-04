@@ -1,37 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!--<div class="col-auto my-1">
-    <label class="mr-sm-2 sr-only" for="inlineFormCustomSelect">Preference</label>
-    <select class="custom-select mr-sm-2" id="inlineFormCustomSelect">
-        <option value="1">One</option>
-        <option value="2">Two</option>
-        <option value="3">Three</option>
-    </select>
-</div>-->
-<h1>Профили аптек</h1>
 
-<table class="table table-bordered">
-    <thead>
-    <tr class="table-info">
-        <th scope="col">City</th>
-        <th scope="col">Address</th>
-        <th scope="col">Hours of work</th>
-        <th scope="col">Phone</th>
-    </tr>
-    </thead>
-    <tbody>
-    {%for el in data%}
-    <tr>
-        <th colspan="4">{{el['name']}}</th>
-    </tr>
-    <tr class="table-primary">
-        <td>{{el['city']}}</td>
-        <td>{{el['address']}}</td>
-        <td>{{el['hours']}}</td>
-        <td>{{el['phone']}}</td>
-    </tr>
-    {%endfor%}
-    </tbody>
-</table>
+
+<div class="card-group">
+    <div class="card bg-light mb-3">
+        <div class="card-header">Регионы, с которыми мы работаем</div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                {%for i in data%}
+                <tr>
+                    <td>
+                        <a href="/{{i}}" class="card-text">{{i}}</a>
+                    </td>
+                </tr>
+                {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card text-white bg-dark mb-3" style="max-width: 350px;">
+        <div class="card-header">Наши чат-боты</div>
+        <div class="card-body">
+            <p class="card-text">Вы можете написать любому из наших ботов, ввести название интересующего вас препарата и
+                получить информацию об аптеках, в которых вы сможете его купить. <br><br>Мы сообщаем инфрмацию о препаратах для
+                лечения заболевания респираторной системы (по классификации АТХ)</p>
+            <p class="card-text">Чат-бот ВКонтакте: <a href="https://vk.com/pharmabot" target="_blank">@pharmabot</a>
+            </p>
+            <p class="card-text">Чат-бот Telegram: <a>@pharm_bot</a></p>
+        </div>
+    </div>
+</div>
 {% endblock %}

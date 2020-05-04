@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Профиль</h1>
-<h4>{{ name }}</h4>
+<h2>{{ name }}</h2>
 <table class="table table-bordered">
     <tr class="table-default">
         <td>City</td>
@@ -17,6 +16,7 @@
         <td>{{ phone }}</td>
     </tr>
 </table>
+<p>Данные по остаткам необходимо отправлять по ссылке <a href="/data/{{id}}">/data/{{id}}</a></p>
 <p>
     <a class="btn btn-outline-danger" href="/logout">Выйти</a>
     <a class="btn btn-outline-success" href="/profile_edit">Редактировать профиль</a>

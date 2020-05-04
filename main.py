@@ -1,5 +1,5 @@
 from flask import Flask, make_response, jsonify, redirect, render_template
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, abort, Api, Resource, request
 from flask_login import current_user, LoginManager, logout_user, login_required, login_user
 from data import db_session
 from data.pharmacy import Pharmacy
@@ -16,6 +16,18 @@ login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
+CITIES = {'Ставропольский край': ['Буденновск', 'Геогриевск', 'Ессентуки', 'Железноводск', 'Изобильный', 'Ипатово',
+                                  'Кисловодск',
+                                  'Лермонтов', 'Минеральные Воды', 'Михайловск', 'Невинномысск', 'Новопавловск',
+                                  'Пятигорск',
+                                  'Светлоград', 'Ставрополь', 'Зеленокумск'],
+          'Краснодарский край': ['Абинск', 'Адлер', 'Анапа', 'Белореченск', 'Геленджик', 'Горячий Ключ',
+                                 'Кореновск',
+                                 'Краснодар', 'Кропоткин', 'Лабинск', 'Новороссийск', 'Сочи', 'Тимашевск', 'Туапсе'],
+          'Ростовская область': ['Азов', 'Батайск', 'Гуково', 'Зерноград', 'Каменск-Шахтинский ', 'Миллерово',
+                                 'Новочеркасск',
+                                 'Новошахтинск', 'Ростов-на-Дону', 'Сальск', 'Семикаракорск', 'Таганрог', 'Цимлянск']}
+
 
 @login_manager.user_loader
 def load_user(pharmacy_id):
@@ -25,15 +37,6 @@ def load_user(pharmacy_id):
 
 def main():
     db_session.global_init("db/pharmacy.db")
-    # user = Pharmacy()
-    # user.name = "Пользователь 1"
-    # user.city = "биография пользователя 1"
-    # user.address = "adasdad"
-    # user.hours = "10-12"
-    # user.set_password("qwertyuiopasdqw21321312")
-    # session = db_session.create_session()
-    # session.add(user)
-    # session.commit()
     app.run()
 
 
@@ -50,6 +53,11 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
+        if form.region.data in CITIES.keys():
+            if form.city.data not in CITIES[form.region.data]:
+                CITIES[form.region.data].append(form.city.data)
+        else:
+            CITIES[form.region.data] = [form.city.data]
         user = Pharmacy(
             name=form.name.data,
             city=form.city.data,
@@ -95,7 +103,7 @@ def login():
             return redirect("/")
         return render_template('login.html',
                                message="Неправильный логин или пароль",
-                               form=form)
+                               form=form, title='Авторизация')
     return render_template('login.html', title='Авторизация', form=form)
 
 
@@ -113,7 +121,7 @@ def profile():
     session = db_session.create_session()
     pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
     return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
-                           hours=pharm.hours, phone=pharm.phone)
+                           hours=pharm.hours, phone=pharm.phone, id=id)
 
 
 @app.route('/profile_edit', methods=['GET', 'POST'])
@@ -148,17 +156,28 @@ def edit_profile():
     return render_template('profile_edit.html', title='Редактирование профиля', form=form)
 
 
-@app.route('/')
-def main_screen():
+@app.route('/pharmacy/<city>')
+def pharmacy_screen(city):
     session = db_session.create_session()
     data = []
-    pharmacy = session.query(Pharmacy).all()
-    shuffle(pharmacy)
-    for pharm in pharmacy[:10]:
-        data.append({'name': pharm.name, 'city': pharm.city, 'address': pharm.address, 'hours': pharm.hours,
+    pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)
+    for pharm in pharmacy:
+        data.append({'name': pharm.name, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 
+    return render_template('pharmacy_screen.html', title='Аптеки', data=data, city=city)
+
+
+@app.route('/')
+def main_screen():
+    data = CITIES.keys()
     return render_template('main_screen.html', title='Главная', data=data)
+
+
+@app.route('/<region>')
+def city_screen(region):
+    data = CITIES[region]
+    return render_template('city_screen.html', title='Города', data=data, region=region)
 
 
 if __name__ == '__main__':

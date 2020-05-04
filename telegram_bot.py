@@ -1,9 +1,7 @@
 from telegram.ext import Updater, MessageHandler, Filters
-from telegram.ext import CallbackContext, CommandHandler, ConversationHandler
-from telegram import ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram import ReplyKeyboardRemove, ParseMode
-from random import randint
-import requests
+from telegram.ext import CommandHandler, ConversationHandler
+from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardRemove
 import sqlite3
 import re
 
@@ -42,12 +40,10 @@ def medicine_ask(name):
     con.create_function("LIKE", 2, sqlite_like)
     con.create_function("UPPER", 1, sqlite_upper)
     cur = con.cursor()
-    print(name)
     result = cur.execute(
         f"""select *
         from medicine
         where UPPER(medicine.name) LIKE UPPER('%{name}%')""").fetchall()
-    print(result)
     return result
 
 
@@ -59,7 +55,7 @@ def pharmacy_ask(city):
     con.create_function("UPPER", 1, sqlite_upper)
     cur = con.cursor()
     result = cur.execute(
-        f"""select id, name, address, hours, phone, phone
+        f"""select id, name, address, hours, phone
         from pharmacy
         where UPPER(pharmacy.city) LIKE UPPER('%{city}%')""").fetchall()
     return result
@@ -90,6 +86,10 @@ def start(update, context):
 
 
 def name(update, context):
+    if update.message.text == '/stop':
+        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
     context.user_data['name'] = update.message.text
     result = medicine_ask(update.message.text)
     if context.user_data['log'] is False:
@@ -125,6 +125,10 @@ def name(update, context):
 
 
 def form(update, context):
+    if update.message.text == '/stop':
+        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
     if result == []:
@@ -139,41 +143,70 @@ def form(update, context):
 
 
 def dose(update, context):
+    if update.message.text == '/stop':
+        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
     if result == []:
         update.message.reply_text('incorrect dose')
         return 3
     context.user_data['result'] = result
-    print(result)
-    update.message.reply_text(f"Введите ваш город", reply_markup=ReplyKeyboardRemove())
+    s = f"Название: {result[0][1]};\nФорма выпуска: {result[0][2]};\nДоза: {result[0][3]}"
+    update.message.reply_text(f"Вы хотите найти информацию об этом препарате?\n\n{s}",
+                              reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
+                                                               one_time_keyboard=True))
     return 4
 
 
+def control(update, context):
+    if update.message.text == '/stop':
+        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
+    text = update.message.text
+    if text == 'Да, все верно':
+        update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
+        return 5
+    elif text == 'Нет, начать сначала':
+        update.message.reply_text("Введите название интересующего Вас препарта кириллицей.",
+                                  reply_markup=ReplyKeyboardRemove())
+        return 1
+    else:
+        update.message.reply_text("Так да или нет?",
+                                  reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
+                                                                   one_time_keyboard=True))
+        return 4
+
+
 def city(update, context):
+    if update.message.text == '/stop':
+        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
         update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
                                   f"Если всё верно, значит я с этим городом не работаю :(")
-        return 4
-    print(context.user_data['result'])
+        return 5
     pharmacy_id = [el[0] for el in result]
     costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
-    answer = []
+    answer = ''
     for el in costs:
         s = list(filter(lambda x: x[0] == el[0], result))
-        s = [*s[0], el[1]]
-        answer.append(s)
-    print(answer)
+        s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {s[0][4]}\nЦена: {el[1]}\n\n"
+        answer += s
     update.message.reply_text(
-        f"{context.user_data['result'][0][1]}, {context.user_data['result'][0][2]}, {context.user_data['result'][0][3]}"
+        f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
+        f" {context.user_data['result'][0][3]}:\n"
         f"\n{answer}")
     return ConversationHandler.END
 
 
 def stop(update, context):
-    update.message.reply_text("Всего доброго")
+    update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
@@ -191,13 +224,13 @@ def main():
             1: [MessageHandler(Filters.text, name, pass_user_data=True)],
             2: [MessageHandler(Filters.text, form, pass_user_data=True)],
             3: [MessageHandler(Filters.text, dose, pass_user_data=True)],
-            4: [MessageHandler(Filters.text, city, pass_user_data=True)]
+            4: [MessageHandler(Filters.text, control, pass_user_data=True)],
+            5: [MessageHandler(Filters.text, city, pass_user_data=True)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]
     )
     dp.add_handler(conv_handler)
-
     updater.start_polling()
     print('Бот начал свою работу......')
     updater.idle()

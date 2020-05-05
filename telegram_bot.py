@@ -87,9 +87,7 @@ def start(update, context):
 
 def name(update, context):
     if update.message.text == '/stop':
-        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
-
+        return stop(update, context)
     context.user_data['name'] = update.message.text
     result = medicine_ask(update.message.text)
     if context.user_data['log'] is False:
@@ -126,8 +124,7 @@ def name(update, context):
 
 def form(update, context):
     if update.message.text == '/stop':
-        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return stop(update, context)
 
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
@@ -144,8 +141,7 @@ def form(update, context):
 
 def dose(update, context):
     if update.message.text == '/stop':
-        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return stop(update, context)
 
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
@@ -162,8 +158,7 @@ def dose(update, context):
 
 def control(update, context):
     if update.message.text == '/stop':
-        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return stop(update, context)
 
     text = update.message.text
     if text == 'Да, все верно':
@@ -182,8 +177,7 @@ def control(update, context):
 
 def city(update, context):
     if update.message.text == '/stop':
-        update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return stop(update, context)
 
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
@@ -205,8 +199,53 @@ def city(update, context):
     return ConversationHandler.END
 
 
+def pharmacy_start(update, context):
+    user = update.message.from_user.first_name
+    update.message.reply_text(
+        f"Здравствуйте, {user}! Введите Ваш город. "
+        "В любой момент можете ввести /stop для прекращения.")
+    context.user_data['log'] = True
+    return 1
+
+
+def pharmacy_city(update, context):
+    if update.message.text == '/stop':
+        return stop(update, context)
+
+    context.user_data['pharmacy_city'] = update.message.text
+    result = pharmacy_ask(context.user_data['pharmacy_city'])
+    if result == []:
+        update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
+                                  f"Если всё верно, значит я с этим городом не работаю :(")
+        return 1
+    context.user_data['pharmacies'] = result
+    pharmacies = '\n\n'.join(
+        [str(i + 1) + '.  ' + result[i][1] + '\nАдрес: ' + result[i][2] for i in range(len(result))])
+    buttons = [[str(i)] for i in range(len(result) + 1)]
+    update.message.reply_text(f'Выберите подходящую вам аптеку:\n\n0. Мне ничего не подходит...\n\n{pharmacies}',
+                              reply_markup=ReplyKeyboardMarkup(buttons,
+                                                               one_time_keyboard=True))
+    return 2
+
+
+def pharmacy_choose(update, context):
+    if update.message.text == '/stop':
+        return stop(update, context)
+
+    text = update.message.text
+    if text == '0':
+        return stop(update, context)
+    try:
+        context.user_data['fav_pharm'] = context.user_data['pharmacies'][int(text) - 1]
+        update.message.reply_text('Я заполнил Ваш выбор!', reply_markup=ReplyKeyboardRemove())
+    except Exception:
+        update.message.reply_text("К сожалению я не понял Вас. Попробуйте снова")
+        return 2
+    return ConversationHandler.END
+
+
 def stop(update, context):
-    update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
+    update.message.reply_text("Всего доброго")
     return ConversationHandler.END
 
 
@@ -217,7 +256,7 @@ def main():
     updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
-    conv_handler = ConversationHandler(
+    medicine_conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
         states={
@@ -230,7 +269,19 @@ def main():
 
         fallbacks=[CommandHandler('stop', stop)]
     )
-    dp.add_handler(conv_handler)
+
+    pharmacy_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('pharmacy', pharmacy_start)],
+
+        states={
+            1: [MessageHandler(Filters.text, pharmacy_city, pass_user_data=True)],
+            2: [MessageHandler(Filters.text, pharmacy_choose, pass_user_data=True)]
+        },
+
+        fallbacks=[CommandHandler('stop', stop)]
+    )
+    dp.add_handler(medicine_conv_handler)
+    dp.add_handler(pharmacy_conv_handler)
     updater.start_polling()
     print('Бот начал свою работу......')
     updater.idle()

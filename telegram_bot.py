@@ -115,7 +115,6 @@ def name(update, context):
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return 1
     context.user_data['result'] = result
-    print(result)
     reply_keyboard = [[el] for el in list(set([el[2] for el in result]))]
     update.message.reply_text("Выберите одну из известных нам форм выпуска:",
                               reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
@@ -125,7 +124,7 @@ def name(update, context):
 def form(update, context):
     if update.message.text == '/stop':
         return stop(update, context)
-
+    context.user_data['log'] = True
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
     if result == []:
@@ -149,7 +148,7 @@ def dose(update, context):
         update.message.reply_text('incorrect dose')
         return 3
     context.user_data['result'] = result
-    s = f"Название: {result[0][1]};\nФорма выпуска: {result[0][2]};\nДозировка: {result[0][3]}"
+    s = f"Название: {result[0][1]}\nФорма выпуска: {result[0][2]}\nДозировка: {result[0][3]}"
     update.message.reply_text(f"Вы хотите найти информацию об этом препарате?\n\n{s}",
                               reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
                                                                one_time_keyboard=True))
@@ -162,6 +161,28 @@ def control(update, context):
 
     text = update.message.text
     if text == 'Да, все верно':
+        if 'fav_pharm' in context.user_data.keys() and context.user_data['fav_pharm'] is not None:
+            result = data_ask((context.user_data['fav_pharm'][0], context.user_data['fav_pharm'][0]),
+                              context.user_data['result'][0][4])
+            if result != []:
+                update.message.reply_text(
+                    f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
+                    f" {context.user_data['result'][0][3]} в вашей любимой аптеке\n"
+                    f"\n{context.user_data['fav_pharm'][1]}\n"
+                    f"Адрес: {context.user_data['fav_pharm'][2]}\n"
+                    f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
+                    f"Телефон: {context.user_data['fav_pharm'][4]}\n"
+                    f"Цена: {result[0][1]}",
+                    reply_markup=ReplyKeyboardRemove())
+            else:
+                update.message.reply_text("К сожалению в Вашей любимой аптеке нет интересующего Вас препарата.")
+            update.message.reply_text("Хотите узнать о наличии препарата в других аптеках?",
+                                      reply_markup=ReplyKeyboardMarkup(
+                                          [['Нет, спасибо'], ['Да, в других аптеках моего города'],
+                                           ['Да, в аптеках другого города']],
+                                          one_time_keyboard=True))
+            return 6
+
         update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
         return 5
     elif text == 'Нет, начать сначала':
@@ -173,6 +194,41 @@ def control(update, context):
                                   reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
                                                                    one_time_keyboard=True))
         return 4
+
+
+def dop_question(update, context):
+    if update.message.text == '/stop':
+        return stop(update, context)
+
+    text = update.message.text
+    if text == 'Нет, спасибо':
+        update.message.reply_text("Всего доброго",
+                                  reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+    elif text == 'Да, в других аптеках моего города':
+        context.user_data['city'] = context.user_data['pharmacy_city']
+        result = pharmacy_ask(context.user_data['city'])
+        pharmacy_id = [el[0] for el in result]
+        costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
+        answer = ''
+        for el in costs:
+            s = list(filter(lambda x: x[0] == el[0], result))
+            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {s[0][4]}\nЦена: {el[1]}\n\n"
+            answer += s
+        update.message.reply_text(
+            f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
+            f" {context.user_data['result'][0][3]}:\n"
+            f"\n{answer}")
+        return ConversationHandler.END
+    elif text == 'Да, в аптеках другого города':
+        update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
+        return 5
+    update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз",
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [['Нет, спасибо'], ['Да, в других аптеках моего города'],
+                                   ['Да, в аптеках другого города']],
+                                  one_time_keyboard=True))
+    return 6
 
 
 def city(update, context):
@@ -245,8 +301,30 @@ def pharmacy_choose(update, context):
 
 
 def stop(update, context):
-    update.message.reply_text("Всего доброго")
+    update.message.reply_text("Всего доброго", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
+
+
+def pharmacy_del(update, context):
+    context.user_data['fav_pharm'] = None
+    update.message.reply_text("Ваша любимая аптека удалена")
+
+
+def pharmacy_view(update, context):
+    update.message.reply_text(f"Ваша любимая аптека:\n"
+                              f"\n{context.user_data['fav_pharm'][1]}\n"
+                              f"Адрес: {context.user_data['fav_pharm'][2]}\n"
+                              f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
+                              f"Телефон: {context.user_data['fav_pharm'][4]}\n")
+
+
+def help(update, context):
+    update.message.reply_text("Введите /start, правильно ответьте на вопросы бота и узнайте информацию "
+                              "об интересующем Вас лекарственном препарате.\n"
+                              "Введите /set_favourite_pharmacy и выберите фаворитную аптеку. "
+                              "Бот будет выводить информацию по лекартсвам прежде всего по этой аптеке.\n"
+                              "Введите /delete_favourite_pharmacy чтобы удалить любимую аптеку.\n"
+                              "Введите /view_favourite_pharmacy чтобы увидеть Вашу любимую аптеку.")
 
 
 def main():
@@ -264,14 +342,15 @@ def main():
             2: [MessageHandler(Filters.text, form, pass_user_data=True)],
             3: [MessageHandler(Filters.text, dose, pass_user_data=True)],
             4: [MessageHandler(Filters.text, control, pass_user_data=True)],
-            5: [MessageHandler(Filters.text, city, pass_user_data=True)]
+            5: [MessageHandler(Filters.text, city, pass_user_data=True)],
+            6: [MessageHandler(Filters.text, dop_question, pass_user_data=True)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]
     )
 
     pharmacy_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('pharmacy', pharmacy_start)],
+        entry_points=[CommandHandler('set_favourite_pharmacy', pharmacy_start)],
 
         states={
             1: [MessageHandler(Filters.text, pharmacy_city, pass_user_data=True)],
@@ -282,6 +361,9 @@ def main():
     )
     dp.add_handler(medicine_conv_handler)
     dp.add_handler(pharmacy_conv_handler)
+    dp.add_handler(CommandHandler("delete_favourite_pharmacy", pharmacy_del, pass_user_data=True))
+    dp.add_handler(CommandHandler("view_favourite_pharmacy", pharmacy_view, pass_user_data=True))
+    dp.add_handler(CommandHandler("help", help))
     updater.start_polling()
     print('Бот начал свою работу......')
     updater.idle()

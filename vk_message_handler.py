@@ -42,7 +42,8 @@ class User:    # Класс, экземпляры которого будут х
         self.user_id = user_id
         self.status = None
         self.req_medicine = None
-        self.geo = None
+        self.med_form = None
+        self.dose = None
         self.city = None
 
 
@@ -81,16 +82,16 @@ def message_handler(token, vk_id):
                                                 'Проверьте написание и попробуйте ещё раз.')
                     else:
                         users[user_id].req_medicine = list(map(lambda x: x[0], db_request_result))
-                        if len(users[user_id].req_medicine) > 1:
+                        if len(users[user_id].req_medicine) > 10:
+                            bot.return_msg(user_id, 'Запрос слишком неточный, сделайте его немного длиннее!')
+                            users[user_id] = User(user_id)
+                            users[user_id].status = 'waiting_for_medicine'
+                        elif len(users[user_id].req_medicine) > 1:
                             bot.clarify_name(user_id, users[user_id].req_medicine)
                             users[user_id].status = 'waiting_for_clarification'
-                        elif (('location' in event.obj.client_info['button_actions'] and
-                               'text' in event.obj.client_info['button_actions'])):
-                            bot.ask_for_location(user_id)
-                            users[user_id].status = 'waiting_for_location'
                         else:
-                            bot.ask_city(user_id)
-                            users[user_id].status = 'waiting_for_city'
+                            bot.ask_for_location(user_id, users[user_id].req_medicine[0])
+                            users[user_id].status = 'waiting_for_location'
                 elif users[user_id].status == 'waiting_for_clarification':
                     clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
                     WHERE name = "{msg['text']}"''').fetchone()
@@ -100,22 +101,17 @@ def message_handler(token, vk_id):
                         bot.clarify_name(user_id, users[user_id].req_medicine)
                     else:
                         users[user_id].req_medicine = clarification[0]
-                        if (('location' in event.obj.client_info['button_actions'] and
-                             'text' in event.obj.client_info['button_actions'])):
-                            bot.ask_for_location(user_id)
-                            users[user_id].status = 'waiting_for_location'
-                        else:
-                            bot.ask_city(user_id)
-                            users[user_id].status = 'waiting_for_city'
-                # пользователь отправил местоположение?
-                elif users[user_id].status == 'waiting_for_location' and 'location' in msg['payload']:
-                    users[user_id].geo = msg['geo']
-                    bot.send_results(user_id, users[user_id].__dict__)
-                    del users[user_id]
+                        bot.ask_for_location(user_id, users[user_id].req_medicine)
+                        users[user_id].status = 'waiting_for_location'
                 # пользователь нажал "Указать город"?
                 elif users[user_id].status == 'waiting_for_location' and 'указать город' in msg['text'].lower():
                     bot.ask_city(user_id)
                     users[user_id].status = 'waiting_for_city'
+                elif ((users[user_id].status == 'waiting_for_location' and
+                       'изменить выбор препарата' in msg['text'].lower())):
+                    bot.return_msg(user_id, 'Выбор препарата сброшен. Теперь Вы можете указать его заново.')
+                    users[user_id] = User(user_id)
+                    users[user_id].status = 'waiting_for_medicine'
                 # пользователь указал сам город?
                 elif users[user_id].status == 'waiting_for_city':
                     users[user_id].city = msg['text']

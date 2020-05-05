@@ -1,5 +1,5 @@
 import random
-from vk_api.keyboard import VkKeyboard
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 
 class VkBotReplies:
@@ -8,15 +8,17 @@ class VkBotReplies:
         self.vk = vk_session.get_api()
 
         self.location_keyboard = VkKeyboard(one_time=True)
-        self.location_keyboard.add_location_button(payload={'button': 'location'})
-        self.location_keyboard.add_line()
         self.location_keyboard.add_button('Указать город', payload={'button': 'wait_for_city'})
+        self.location_keyboard.add_line()
+        self.location_keyboard.add_button('Изменить выбор препарата',
+                                          payload={'button': 'cancel'},
+                                          color=VkKeyboardColor.NEGATIVE)
 
     def start(self, send_to):    # Первое сообщение, приветствие и вопрос о лекарстве
         username = self.vk.users.get(user_ids=send_to)[0]['first_name']
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Здравствуйте, {username}! Какой препарат вам необходимо найти? '
+                              message=f'Здравствуйте, {username}! Какой препарат Вам необходимо найти? '
                               f'Напишите его название кириллицей.')
 
     def clarify_name(self, send_to, names):
@@ -27,29 +29,30 @@ class VkBotReplies:
             self.clarify_keyboard.add_button(name)
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message='Я нашёл несколько лекарств в базе данных. Выберите то, которое вы ищете.',
+                              message='Я нашёл несколько лекарств в базе данных. Выберите то, которое Вы ищете.',
                               keyboard=self.clarify_keyboard.get_keyboard())
 
-    def ask_for_location(self, send_to):    # Запрос местоположения или запрос города - зависит от выбора пользователя
+    def ask_for_location(self, send_to, found_medicine):    # Выбор между отправкой города и отменой выбора лекарства
         keyboard = self.location_keyboard.get_keyboard()
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message='Укажите свой город или отправьте местоположение, '
-                                      'чтобы я нашёл ближайшие аптеки.',
+                              message=f'Выбран препарат "{found_medicine}"\n'
+                              f'Укажите город, и я дам Вам список его аптек, '
+                              f'где есть запрошенный препарат. '
+                              f'Также вы можете сменить выбор лекарства.',
                               keyboard=keyboard)
 
-    def ask_city(self, send_to):    # Вызывается при недоступности клавиатуры бота или по выбору пользователя
+    def ask_city(self, send_to):    # Спрашивает город
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message='Укажите свой город, '
-                                      'чтобы я нашёл ближайшие аптеки.')
+                              message='Укажите свой город, чтобы я нашёл аптеки.')
 
     def send_results(self, send_to, info):    # Высылает результат. Пока что работает в тестовом режиме.
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Вот то, что нам удалось найти!\n{info}')
+                              message=f'Вот то, что мне удалось найти!\n{info}')
 
-    def return_msg(self, send_to, msg):    # Метод, присылающий пользователю любое сообщение (msg)
+    def return_msg(self, send_to, msg):    # Метод, присылающий пользователю сообщения в нестандартных ситуациях.
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'{msg}')

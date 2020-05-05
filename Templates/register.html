@@ -52,7 +52,7 @@
     </p>
     <p>
         {{ form.phone.label }}<br>
-        {{ form.phone(class="form-control") }}<br>
+        {{ form.phone(class="form-control", type="tel") }}<br>
         {% for error in form.phone.errors %}
     <p class="alert alert-danger" role="alert">
         {{ error }}
@@ -77,7 +77,7 @@
     </p>
     {% endfor %}
     </p>
-    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-dark") }}</p>
     {{message}}
 </form>
 {% endblock %}

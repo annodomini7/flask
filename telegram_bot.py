@@ -137,7 +137,7 @@ def form(update, context):
         return 2
     context.user_data['result'] = result
     reply_keyboard = [[el] for el in list(set([el[3] for el in result]))]
-    update.message.reply_text(f"Выберите одну из известных нам доз:",
+    update.message.reply_text(f"Выберите одну из известных нам дозировок:",
                               reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
     return 3
 
@@ -153,7 +153,7 @@ def dose(update, context):
         update.message.reply_text('incorrect dose')
         return 3
     context.user_data['result'] = result
-    s = f"Название: {result[0][1]};\nФорма выпуска: {result[0][2]};\nДоза: {result[0][3]}"
+    s = f"Название: {result[0][1]};\nФорма выпуска: {result[0][2]};\nДозировка: {result[0][3]}"
     update.message.reply_text(f"Вы хотите найти информацию об этом препарате?\n\n{s}",
                               reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
                                                                one_time_keyboard=True))

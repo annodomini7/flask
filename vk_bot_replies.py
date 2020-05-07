@@ -32,6 +32,17 @@ class VkBotReplies:
                               message='Я нашёл несколько лекарств в базе данных. Выберите то, которое Вы ищете.',
                               keyboard=self.clarify_keyboard.get_keyboard())
 
+    def ask_med_form(self, send_to, forms):
+        self.form_keyboard = VkKeyboard(one_time=True)
+        self.form_keyboard.add_button(forms.pop(0))
+        for form in forms:
+            self.form_keyboard.add_line()
+            self.form_keyboard.add_button(form)
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message='Выберите одну из известных мне форм выпуска.',
+                              keyboard=self.form_keyboard.get_keyboard())
+
     def ask_for_location(self, send_to, found_medicine):    # Выбор между отправкой города и отменой выбора лекарства
         keyboard = self.location_keyboard.get_keyboard()
         self.vk.messages.send(peer_id=send_to,

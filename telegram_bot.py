@@ -76,6 +76,21 @@ def data_ask(pharmacy_id, barcode):
     return list(set(result))
 
 
+def phone_format(phone):
+    try:
+        if phone[0] == '8':
+            phone = '+7' + phone[1:]
+    except Exception:
+        phone = '-'
+    return phone
+
+
+def cost_format(cost):
+    r, k = cost.split(',')
+    format_cost = r + ' руб ' + k[:2] + ' коп'
+    return format_cost
+
+
 def start(update, context):
     user = update.message.from_user.first_name
     update.message.reply_text(
@@ -145,7 +160,7 @@ def dose(update, context):
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
     if result == []:
-        update.message.reply_text('incorrect dose')
+        update.message.reply_text('К сожалению я не понял Вас. Выберите дозировку еще раз.')
         return 3
     context.user_data['result'] = result
     s = f"Название: {result[0][1]}\nФорма выпуска: {result[0][2]}\nДозировка: {result[0][3]}"
@@ -171,8 +186,8 @@ def control(update, context):
                     f"\n{context.user_data['fav_pharm'][1]}\n"
                     f"Адрес: {context.user_data['fav_pharm'][2]}\n"
                     f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
-                    f"Телефон: {context.user_data['fav_pharm'][4]}\n"
-                    f"Цена: {result[0][1]}",
+                    f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n"
+                    f"Цена: {cost_format(result[0][1])}",
                     reply_markup=ReplyKeyboardRemove())
             else:
                 update.message.reply_text("К сожалению в Вашей любимой аптеке нет интересующего Вас препарата.")
@@ -202,9 +217,7 @@ def dop_question(update, context):
 
     text = update.message.text
     if text == 'Нет, спасибо':
-        update.message.reply_text("Всего доброго",
-                                  reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        return stop(update, context)
     elif text == 'Да, в других аптеках моего города':
         context.user_data['city'] = context.user_data['pharmacy_city']
         result = pharmacy_ask(context.user_data['city'])
@@ -213,12 +226,13 @@ def dop_question(update, context):
         answer = ''
         for el in costs:
             s = list(filter(lambda x: x[0] == el[0], result))
-            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {s[0][4]}\nЦена: {el[1]}\n\n"
+            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+                f"Цена: {cost_format(el[1])}\n\n"
             answer += s
         update.message.reply_text(
             f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
             f" {context.user_data['result'][0][3]}:\n"
-            f"\n{answer}")
+            f"\n{answer}", reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
     elif text == 'Да, в аптеках другого города':
         update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
@@ -246,12 +260,13 @@ def city(update, context):
     answer = ''
     for el in costs:
         s = list(filter(lambda x: x[0] == el[0], result))
-        s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {s[0][4]}\nЦена: {el[1]}\n\n"
+        s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+            f"Цена: {cost_format(el[1])}\n\n"
         answer += s
     update.message.reply_text(
         f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
         f" {context.user_data['result'][0][3]}:\n"
-        f"\n{answer}")
+        f"\n{answer}", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 
@@ -293,7 +308,7 @@ def pharmacy_choose(update, context):
         return stop(update, context)
     try:
         context.user_data['fav_pharm'] = context.user_data['pharmacies'][int(text) - 1]
-        update.message.reply_text('Я заполнил Ваш выбор!', reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text('Я запомнил Ваш выбор!', reply_markup=ReplyKeyboardRemove())
     except Exception:
         update.message.reply_text("К сожалению я не понял Вас. Попробуйте снова")
         return 2
@@ -311,11 +326,14 @@ def pharmacy_del(update, context):
 
 
 def pharmacy_view(update, context):
-    update.message.reply_text(f"Ваша любимая аптека:\n"
-                              f"\n{context.user_data['fav_pharm'][1]}\n"
-                              f"Адрес: {context.user_data['fav_pharm'][2]}\n"
-                              f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
-                              f"Телефон: {context.user_data['fav_pharm'][4]}\n")
+    if 'fav_pharm' not in context.user_data.keys() or context.user_data['fav_pharm'] is None:
+        update.message.reply_text(f"Вы не выбрали Вашу любимую аптеку...")
+    else:
+        update.message.reply_text(f"Ваша любимая аптека:\n"
+                                  f"\n{context.user_data['fav_pharm'][1]}\n"
+                                  f"Адрес: {context.user_data['fav_pharm'][2]}\n"
+                                  f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
+                                  f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n")
 
 
 def help(update, context):
@@ -329,7 +347,7 @@ def help(update, context):
 
 def main():
     REQUEST_KWARGS = {
-        'proxy_url': 'socks5://85.10.235.14:1080', }
+        'proxy_url': 'socks5://148.251.234.93:1080', }
 
     updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)

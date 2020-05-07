@@ -43,6 +43,17 @@ class VkBotReplies:
                               message='Выберите одну из известных мне форм выпуска.',
                               keyboard=self.form_keyboard.get_keyboard())
 
+    def ask_dose(self, send_to, doses):
+        self.dose_keyboard = VkKeyboard(one_time=True)
+        self.dose_keyboard.add_button(doses.pop(0))
+        for dose in doses:
+            self.dose_keyboard.add_line()
+            self.dose_keyboard.add_button(dose)
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message='Выберите одну из известных мне дозировок.',
+                              keyboard=self.dose_keyboard.get_keyboard())
+
     def ask_for_location(self, send_to, found_medicine):    # Выбор между отправкой города и отменой выбора лекарства
         keyboard = self.location_keyboard.get_keyboard()
         self.vk.messages.send(peer_id=send_to,

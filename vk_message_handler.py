@@ -86,12 +86,9 @@ def message_handler(token, vk_id):
                             bot.return_msg(user_id, 'Запрос слишком неточный, сделайте его немного длиннее!')
                             users[user_id] = User(user_id)
                             users[user_id].status = 'waiting_for_medicine'
-                        elif len(users[user_id].req_medicine) > 1:
+                        else:
                             bot.clarify_name(user_id, users[user_id].req_medicine)
                             users[user_id].status = 'waiting_for_clarification'
-                        else:
-                            bot.ask_for_location(user_id, users[user_id].req_medicine[0])
-                            users[user_id].status = 'waiting_for_location'
                 elif users[user_id].status == 'waiting_for_clarification':
                     clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
                     WHERE name = "{msg['text']}"''').fetchone()
@@ -101,9 +98,32 @@ def message_handler(token, vk_id):
                         bot.clarify_name(user_id, users[user_id].req_medicine)
                     else:
                         users[user_id].req_medicine = clarification[0]
-                        bot.ask_for_location(user_id, users[user_id].req_medicine)
+                        db_request_result = cur.execute(f'''SELECT DISTINCT form FROM medicine
+                                                    WHERE name = "{users[user_id].req_medicine}"''').fetchall()
+                        users[user_id].med_form = tuple(map(lambda x: x[0], db_request_result))
+                        bot.ask_med_form(user_id, users[user_id].med_form)
+                        users[user_id].status = 'waiting_for_med_form'
+                # пользователь указал форму выпуска?
+                elif users[user_id].status == 'waiting_for_med_form':
+                    db_request_result = cur.execute(f'''SELECT DISTINCT form, dose FROM medicine
+                    WHERE name = "{users[user_id].req_medicine}" and form = "{msg['text']}"''').fetchall()
+                    if db_request_result:
+                        users[user_id].med_form = db_request_result[0][0]
+                        users[user_id].dose = tuple(map(lambda x: x[1], db_request_result))
+                        bot.ask_dose(user_id, users[user_id].dose)
+                        users[user_id].status = 'waiting_for_dose'
+                    else:
+                        bot.ask_med_form(user_id, users[user_id].med_form)
+                elif users[user_id].status == 'waiting_for_dose':
+                    db_request_result = cur.execute(f'''SELECT DISTINCT dose FROM medicine
+                                        WHERE name = "{users[user_id].req_medicine}" and
+                                        form = "{users[user_id].med_form}" and dose = "{msg['text']}"''').fetchone()
+                    if db_request_result:
+                        users[user_id].dose = db_request_result[0]
                         users[user_id].status = 'waiting_for_location'
-                # пользователь нажал "Указать город"?
+                        bot.location_or_cancel(user_id, users[user_id])
+                    else:
+                        bot.ask_dose(user_id, users[user_id].dose)
                 elif users[user_id].status == 'waiting_for_location' and 'указать город' in msg['text'].lower():
                     bot.ask_city(user_id)
                     users[user_id].status = 'waiting_for_city'

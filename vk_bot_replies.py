@@ -60,7 +60,7 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Выбран препарат "{user.req_medicine}"\n'
                               f'Форма выпуска: {user.med_form}\n'
-                              f'Дозировка: {user.dose}'
+                              f'Дозировка: {user.dose}\n'
                               f'Укажите город, и я дам Вам список его аптек, '
                               f'где есть запрошенный препарат. '
                               f'Также вы можете сменить выбор лекарства.',

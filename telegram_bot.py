@@ -94,15 +94,36 @@ def cost_format(cost):
 def start(update, context):
     user = update.message.from_user.first_name
     update.message.reply_text(
-        f"Здравствуйте, {user}! Какой препарат вам необходимо найти? Напишите его название кириллицей. "
-        "В любой момент можете ввести /stop для прекращения опроса.")
-    context.user_data['log'] = True
+        f"Здравствуйте, {user}! Какой препарат вам необходимо найти? Напишите его название кириллицей.")
+    if 'log' not in context.user_data.keys():
+        context.user_data['log'] = True
+    if 'phase' not in context.user_data.keys():
+        context.user_data['phase'] = 1
     return 1
 
 
+def conv_handler(update, context):
+    if 'phase' not in context.user_data.keys():
+        return start(update, context)
+    if context.user_data['phase'] == 1:
+        context.user_data['phase'] = name(update, context)
+    elif context.user_data['phase'] == 2:
+        context.user_data['phase'] = form(update, context)
+    elif context.user_data['phase'] == 3:
+        context.user_data['phase'] = dose(update, context)
+    elif context.user_data['phase'] == 4:
+        context.user_data['phase'] = control(update, context)
+    elif context.user_data['phase'] == 5:
+        context.user_data['phase'] = city(update, context)
+    elif context.user_data['phase'] == 6:
+        context.user_data['phase'] = dop_question(update, context)
+    elif context.user_data['phase'] == 7:
+        context.user_data['phase'] = dop_question_city(update, context)
+    elif context.user_data['phase'] == 8:
+        context.user_data['phase'] = other_city_or_repeat(update, context)
+
+
 def name(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
     context.user_data['name'] = update.message.text
     result = medicine_ask(update.message.text)
     if context.user_data['log'] is False:
@@ -137,8 +158,6 @@ def name(update, context):
 
 
 def form(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
     context.user_data['log'] = True
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
@@ -154,9 +173,6 @@ def form(update, context):
 
 
 def dose(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
     if result == []:
@@ -171,9 +187,6 @@ def dose(update, context):
 
 
 def control(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     text = update.message.text
     if text == 'Да, все верно':
         if 'fav_pharm' in context.user_data.keys() and context.user_data['fav_pharm'] is not None:
@@ -210,6 +223,7 @@ def control(update, context):
     elif text == 'Нет, начать сначала':
         update.message.reply_text("Введите название интересующего Вас препарта кириллицей.",
                                   reply_markup=ReplyKeyboardRemove())
+        context.user_data['log'] = True
         return 1
     else:
         update.message.reply_text("Так да или нет?",
@@ -219,13 +233,11 @@ def control(update, context):
 
 
 def dop_question(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     text = update.message.text
     if text == 'Нет, спасибо':
-        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название."
-                                  " Чтобы закончить диалог введите /stop.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
+                                  reply_markup=ReplyKeyboardRemove())
+        context.user_data['log'] = True
         return 1
     elif text == 'Да, в других аптеках моего города':
         context.user_data['city'] = context.user_data['city']
@@ -259,9 +271,6 @@ def dop_question(update, context):
 
 
 def dop_question_city(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     text = update.message.text
     if text == 'Да':
         result = pharmacy_ask(context.user_data['city'])
@@ -290,9 +299,6 @@ def dop_question_city(update, context):
 
 
 def city(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
@@ -318,22 +324,15 @@ def city(update, context):
     return 8
 
 
-# update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
-#                               reply_markup=ReplyKeyboardMarkup(
-#                                   [['Да'],['Нет, спасибо']],
-#                                   one_time_keyboard=True))
-
 def other_city_or_repeat(update, context):
-    if update.message.text == '/stop':
-        return stop(update, context)
-
     text = update.message.text
     if text == 'Да':
         update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
         return 5
     elif text == 'Нет, спасибо':
-        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название."
-                                  " Чтобы закончить диалог введите /stop.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
+                                  reply_markup=ReplyKeyboardRemove())
+        context.user_data['log'] = True
         return 1
     update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз")
     return 8
@@ -406,8 +405,8 @@ def pharmacy_view(update, context):
 
 
 def help(update, context):
-    update.message.reply_text("Введите /start, правильно ответьте на вопросы бота и узнайте информацию "
-                              "об интересующем Вас лекарственном препарате.\n"
+    update.message.reply_text("Введите название лекарства, правильно ответьте на вопросы бота и узнайте информацию "
+                              "об интересующем Вас препарате.\n"
                               "Введите /set_favourite_pharmacy и выберите фаворитную аптеку. "
                               "Бот будет выводить информацию по лекарствам прежде всего по этой аптеке.\n"
                               "Введите /delete_favourite_pharmacy чтобы удалить любимую аптеку.\n"
@@ -421,23 +420,6 @@ def main():
     updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
     dp = updater.dispatcher
-    medicine_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-
-        states={
-            1: [MessageHandler(Filters.text, name, pass_user_data=True)],
-            2: [MessageHandler(Filters.text, form, pass_user_data=True)],
-            3: [MessageHandler(Filters.text, dose, pass_user_data=True)],
-            4: [MessageHandler(Filters.text, control, pass_user_data=True)],
-            5: [MessageHandler(Filters.text, city, pass_user_data=True)],
-            6: [MessageHandler(Filters.text, dop_question, pass_user_data=True)],
-            7: [MessageHandler(Filters.text, dop_question_city, pass_user_data=True)],
-            8: [MessageHandler(Filters.text, other_city_or_repeat, pass_user_data=True)]
-        },
-
-        fallbacks=[CommandHandler('stop', stop)]
-    )
-
     pharmacy_conv_handler = ConversationHandler(
         entry_points=[CommandHandler('set_favourite_pharmacy', pharmacy_start)],
 
@@ -448,11 +430,13 @@ def main():
 
         fallbacks=[CommandHandler('stop', stop)]
     )
-    dp.add_handler(medicine_conv_handler)
     dp.add_handler(pharmacy_conv_handler)
     dp.add_handler(CommandHandler("delete_favourite_pharmacy", pharmacy_del, pass_user_data=True))
     dp.add_handler(CommandHandler("view_favourite_pharmacy", pharmacy_view, pass_user_data=True))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("start", start, pass_user_data=True))
+    text_handler = MessageHandler(Filters.text, conv_handler, pass_user_data=True)
+    dp.add_handler(text_handler)
     updater.start_polling()
     print('Бот начал свою работу......')
     updater.idle()

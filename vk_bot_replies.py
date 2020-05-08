@@ -54,11 +54,13 @@ class VkBotReplies:
                               message='Выберите одну из известных мне дозировок.',
                               keyboard=dose_keyboard.get_keyboard())
 
-    def ask_for_location(self, send_to, found_medicine):    # Выбор между отправкой города и отменой выбора лекарства
+    def location_or_cancel(self, send_to, user):    # Выбор между отправкой города и отменой выбора лекарства
         keyboard = self.location_keyboard.get_keyboard()
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Выбран препарат "{found_medicine}"\n'
+                              message=f'Выбран препарат "{user.req_medicine}"\n'
+                              f'Форма выпуска: {user.med_form}\n'
+                              f'Дозировка: {user.dose}'
                               f'Укажите город, и я дам Вам список его аптек, '
                               f'где есть запрошенный препарат. '
                               f'Также вы можете сменить выбор лекарства.',

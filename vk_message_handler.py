@@ -45,6 +45,7 @@ class User:    # Класс, экземпляры которого будут х
         self.med_form = None
         self.dose = None
         self.city = None
+        self.barcode = None
 
 
 def message_handler(token, vk_id):
@@ -132,11 +133,35 @@ def message_handler(token, vk_id):
                     bot.return_msg(user_id, 'Выбор препарата сброшен. Теперь Вы можете указать его заново.')
                     users[user_id] = User(user_id)
                     users[user_id].status = 'waiting_for_medicine'
+                elif users[user_id].status == 'waiting_for_location':
+                    bot.location_or_cancel(user_id, users[user_id])
                 # пользователь указал сам город?
                 elif users[user_id].status == 'waiting_for_city':
-                    users[user_id].city = msg['text']
-                    bot.send_results(user_id, users[user_id].__dict__)
+                    db_request_result = cur.execute(f'''SELECT DISTINCT city FROM pharmacy
+                                                        WHERE LOWER(pharmacy.city) LIKE
+                                                        LOWER('{msg['text']}')''').fetchone()
+                    if db_request_result:
+                        users[user_id].city = db_request_result[0]
+                        users[user_id].barcode = cur.execute(f'''SELECT DISTINCT barcode FROM medicine
+                        WHERE name = '{users[user_id].req_medicine}' and form = '{users[user_id].med_form}'
+                        and dose = "{users[user_id].dose}"''').fetchone()[0]
+                        bot.send_results(user_id, users[user_id].barcode)
+                    else:
+                        bot.return_msg(user_id, 'Я не знаю такой город, проверьте написание! '
+                                                'Если вы уверены, что написано верно, значит, '
+                                                'я с этим городом пока что не работаю :(')
+                    bot.shall_i_try_again(user_id)
+                    users[user_id].status = 'waiting_for_again_decision'
+                elif ((users[user_id].status == 'waiting_for_again_decision' and
+                       msg['text'].lower() == 'посмотреть в другом городе')):
+                    bot.ask_city(user_id)
+                    users[user_id].status = 'waiting_for_city'
+                elif ((users[user_id].status == 'waiting_for_again_decision' and
+                       msg['text'].lower() == 'больше не нужно')):
+                    bot.return_msg(user_id, 'Всего доброго!')
                     del users[user_id]
+                elif users[user_id].status == 'waiting_for_again_decision':
+                    bot.shall_i_try_again(user_id)
             except Exception as e:
                 bot.return_msg(user_id, e)
                 if not users.get(user_id, None) is None:

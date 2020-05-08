@@ -4,15 +4,21 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 class VkBotReplies:
     """Этот класс содержит методы, отвечающие за, как иронично, ответы бота."""
-    def __init__(self, vk_session):    # служебный метод: инициализация экземпляра класса + создание клавиатур
+    def __init__(self, vk_session):    # служебный метод: инициализация экземпляра класса + создание части клавиатур
         self.vk = vk_session.get_api()
 
         self.location_keyboard = VkKeyboard(one_time=True)
-        self.location_keyboard.add_button('Указать город', payload={'button': 'wait_for_city'})
+        self.location_keyboard.add_button('Указать город',
+                                          color=VkKeyboardColor.PRIMARY)
         self.location_keyboard.add_line()
         self.location_keyboard.add_button('Изменить выбор препарата',
-                                          payload={'button': 'cancel'},
                                           color=VkKeyboardColor.NEGATIVE)
+        self.again_keyboard = VkKeyboard(one_time=True)
+        self.again_keyboard.add_button('Посмотреть в другом городе',
+                                       color=VkKeyboardColor.PRIMARY)
+        self.again_keyboard.add_line()
+        self.again_keyboard.add_button('Больше не нужно',
+                                       color=VkKeyboardColor.NEGATIVE)
 
     def start(self, send_to):    # Первое сообщение, приветствие и вопрос о лекарстве
         username = self.vk.users.get(user_ids=send_to)[0]['first_name']
@@ -76,7 +82,13 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Вот то, что мне удалось найти!\n{info}')
 
-    def return_msg(self, send_to, msg):    # Метод, присылающий пользователю сообщения в нестандартных ситуациях.
+    def shall_i_try_again(self, send_to):    # "Хотите, чтобы я поискал в другом городе?"
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message='Хотите, чтобы я поискал в другом городе?',
+                              keyboard=self.again_keyboard.get_keyboard())
+
+    def return_msg(self, send_to, msg):    # Присылает пользователю ошибки и сообщения, не требующие особых дополнений.
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'{msg}')

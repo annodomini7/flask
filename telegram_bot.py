@@ -57,7 +57,7 @@ def pharmacy_ask(city):
     result = cur.execute(
         f"""select id, name, address, hours, phone
         from pharmacy
-        where UPPER(pharmacy.city) LIKE UPPER('%{city}%')""").fetchall()
+        where UPPER(pharmacy.city) = UPPER('{city}')""").fetchall()
     return result
 
 
@@ -197,7 +197,14 @@ def control(update, context):
                                            ['Да, в аптеках другого города']],
                                           one_time_keyboard=True))
             return 6
-
+        if 'city' in context.user_data.keys():
+            update.message.reply_text(
+                f"Хотите узнать о наличии препарата в аптеках города {context.user_data['city'].capitalize()}?",
+                reply_markup=ReplyKeyboardMarkup(
+                    [['Да'],
+                     ['Нет, в аптеках другого города']],
+                    one_time_keyboard=True))
+            return 7
         update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
         return 5
     elif text == 'Нет, начать сначала':
@@ -217,9 +224,11 @@ def dop_question(update, context):
 
     text = update.message.text
     if text == 'Нет, спасибо':
-        return stop(update, context)
+        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название."
+                                  " Чтобы закончить диалог введите /stop.", reply_markup=ReplyKeyboardRemove())
+        return 1
     elif text == 'Да, в других аптеках моего города':
-        context.user_data['city'] = context.user_data['pharmacy_city']
+        context.user_data['city'] = context.user_data['city']
         result = pharmacy_ask(context.user_data['city'])
         pharmacy_id = [el[0] for el in result]
         costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
@@ -233,9 +242,13 @@ def dop_question(update, context):
             f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
             f" {context.user_data['result'][0][3]}:\n"
             f"\n{answer}", reply_markup=ReplyKeyboardRemove())
-        return ConversationHandler.END
+        update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
+                                  reply_markup=ReplyKeyboardMarkup(
+                                      [['Да'], ['Нет, спасибо']],
+                                      one_time_keyboard=True))
+        return 8
     elif text == 'Да, в аптеках другого города':
-        update.message.reply_text("Введите название Вашего города.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
         return 5
     update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз",
                               reply_markup=ReplyKeyboardMarkup(
@@ -243,6 +256,37 @@ def dop_question(update, context):
                                    ['Да, в аптеках другого города']],
                                   one_time_keyboard=True))
     return 6
+
+
+def dop_question_city(update, context):
+    if update.message.text == '/stop':
+        return stop(update, context)
+
+    text = update.message.text
+    if text == 'Да':
+        result = pharmacy_ask(context.user_data['city'])
+        pharmacy_id = [el[0] for el in result]
+        costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
+        answer = ''
+        for el in costs:
+            s = list(filter(lambda x: x[0] == el[0], result))
+            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+                f"Цена: {cost_format(el[1])}\n\n"
+            answer += s
+        update.message.reply_text(
+            f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
+            f" {context.user_data['result'][0][3]}:\n"
+            f"\n{answer}", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
+                                  reply_markup=ReplyKeyboardMarkup(
+                                      [['Да'], ['Нет, спасибо']],
+                                      one_time_keyboard=True))
+        return 8
+    elif text == 'Нет, в аптеках другого города':
+        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
+        return 5
+    update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз")
+    return 7
 
 
 def city(update, context):
@@ -267,7 +311,32 @@ def city(update, context):
         f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
         f" {context.user_data['result'][0][3]}:\n"
         f"\n{answer}", reply_markup=ReplyKeyboardRemove())
-    return ConversationHandler.END
+    update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [['Да'], ['Нет, спасибо']],
+                                  one_time_keyboard=True))
+    return 8
+
+
+# update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
+#                               reply_markup=ReplyKeyboardMarkup(
+#                                   [['Да'],['Нет, спасибо']],
+#                                   one_time_keyboard=True))
+
+def other_city_or_repeat(update, context):
+    if update.message.text == '/stop':
+        return stop(update, context)
+
+    text = update.message.text
+    if text == 'Да':
+        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
+        return 5
+    elif text == 'Нет, спасибо':
+        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название."
+                                  " Чтобы закончить диалог введите /stop.", reply_markup=ReplyKeyboardRemove())
+        return 1
+    update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз")
+    return 8
 
 
 def pharmacy_start(update, context):
@@ -283,8 +352,8 @@ def pharmacy_city(update, context):
     if update.message.text == '/stop':
         return stop(update, context)
 
-    context.user_data['pharmacy_city'] = update.message.text
-    result = pharmacy_ask(context.user_data['pharmacy_city'])
+    context.user_data['city'] = update.message.text
+    result = pharmacy_ask(context.user_data['city'])
     if result == []:
         update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
                                   f"Если всё верно, значит я с этим городом не работаю :(")
@@ -340,7 +409,7 @@ def help(update, context):
     update.message.reply_text("Введите /start, правильно ответьте на вопросы бота и узнайте информацию "
                               "об интересующем Вас лекарственном препарате.\n"
                               "Введите /set_favourite_pharmacy и выберите фаворитную аптеку. "
-                              "Бот будет выводить информацию по лекартсвам прежде всего по этой аптеке.\n"
+                              "Бот будет выводить информацию по лекарствам прежде всего по этой аптеке.\n"
                               "Введите /delete_favourite_pharmacy чтобы удалить любимую аптеку.\n"
                               "Введите /view_favourite_pharmacy чтобы увидеть Вашу любимую аптеку.")
 
@@ -361,7 +430,9 @@ def main():
             3: [MessageHandler(Filters.text, dose, pass_user_data=True)],
             4: [MessageHandler(Filters.text, control, pass_user_data=True)],
             5: [MessageHandler(Filters.text, city, pass_user_data=True)],
-            6: [MessageHandler(Filters.text, dop_question, pass_user_data=True)]
+            6: [MessageHandler(Filters.text, dop_question, pass_user_data=True)],
+            7: [MessageHandler(Filters.text, dop_question_city, pass_user_data=True)],
+            8: [MessageHandler(Filters.text, other_city_or_repeat, pass_user_data=True)]
         },
 
         fallbacks=[CommandHandler('stop', stop)]

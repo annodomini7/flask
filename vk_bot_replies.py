@@ -23,8 +23,8 @@ class VkBotReplies:
 
     def clarify_name(self, send_to, names):
         clarify_keyboard = VkKeyboard(one_time=True)
-        clarify_keyboard.add_button(names.pop(0))
-        for name in names:
+        clarify_keyboard.add_button(names[0])
+        for name in names[1:]:
             clarify_keyboard.add_line()
             clarify_keyboard.add_button(name)
         self.vk.messages.send(peer_id=send_to,
@@ -34,8 +34,8 @@ class VkBotReplies:
 
     def ask_med_form(self, send_to, forms):
         form_keyboard = VkKeyboard(one_time=True)
-        form_keyboard.add_button(forms.pop(0))
-        for form in forms:
+        form_keyboard.add_button(forms[0])
+        for form in forms[1:]:
             form_keyboard.add_line()
             form_keyboard.add_button(form)
         self.vk.messages.send(peer_id=send_to,
@@ -45,8 +45,8 @@ class VkBotReplies:
 
     def ask_dose(self, send_to, doses):
         dose_keyboard = VkKeyboard(one_time=True)
-        dose_keyboard.add_button(doses.pop(0))
-        for dose in doses:
+        dose_keyboard.add_button(doses[0])
+        for dose in doses[1:]:
             dose_keyboard.add_line()
             dose_keyboard.add_button(dose)
         self.vk.messages.send(peer_id=send_to,

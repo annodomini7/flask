@@ -81,7 +81,7 @@ def message_handler(token, vk_id):
                         bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
                                                 'Проверьте написание и попробуйте ещё раз.')
                     else:
-                        users[user_id].req_medicine = list(map(lambda x: x[0], db_request_result))
+                        users[user_id].req_medicine = tuple(map(lambda x: x[0], db_request_result))
                         if len(users[user_id].req_medicine) > 10:
                             bot.return_msg(user_id, 'Запрос слишком неточный, сделайте его немного длиннее!')
                             users[user_id] = User(user_id)

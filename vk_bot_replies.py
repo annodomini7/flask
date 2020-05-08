@@ -29,7 +29,7 @@ class VkBotReplies:
             clarify_keyboard.add_button(name)
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message='Я нашёл несколько лекарств в базе данных. Выберите то, которое Вы ищете.',
+                              message='Я нашёл что-то в базе данных. Выберите тот препарат, который Вы ищете.',
                               keyboard=clarify_keyboard.get_keyboard())
 
     def ask_med_form(self, send_to, forms):

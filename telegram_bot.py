@@ -187,6 +187,7 @@ def dose(update, context):  # обработка введенного как д�
 
 
 def control(update, context):  # проверка на вывод инфы о препарате или о repeat
+    x = '-'
     text = update.message.text
     if text == 'Да, все верно':
         if 'fav_pharm' in context.user_data.keys() and context.user_data['fav_pharm'] is not None:
@@ -198,7 +199,7 @@ def control(update, context):  # проверка на вывод инфы о п
                     f" {context.user_data['result'][0][3]} в вашей любимой аптеке\n"
                     f"\n{context.user_data['fav_pharm'][1]}\n"
                     f"Адрес: {context.user_data['fav_pharm'][2]}\n"
-                    f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
+                    f"Часы работы: {context.user_data['fav_pharm'][3] if context.user_data['fav_pharm'][3] is not None else x}\n"
                     f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n"
                     f"Цена: {cost_format(result[0][1])}",
                     reply_markup=ReplyKeyboardRemove())
@@ -233,6 +234,7 @@ def control(update, context):  # проверка на вывод инфы о п
 
 
 def dop_question(update, context):  # обработка на выдачу инфы в других аптеках
+    x = '-'
     text = update.message.text
     if text == 'Нет, спасибо':
         update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
@@ -247,7 +249,8 @@ def dop_question(update, context):  # обработка на выдачу ин�
         answer = ''
         for el in costs:
             s = list(filter(lambda x: x[0] == el[0], result))
-            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+            s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}" \
+                f"\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
                 f"Цена: {cost_format(el[1])}\n\n"
             answer += s
         update.message.reply_text(
@@ -271,6 +274,7 @@ def dop_question(update, context):  # обработка на выдачу ин�
 
 
 def dop_question_city(update, context):  # выдавать ли инфу в других городах
+    x = '-'
     text = update.message.text
     if text == 'Да':
         result = pharmacy_ask(context.user_data['city'])
@@ -279,7 +283,8 @@ def dop_question_city(update, context):  # выдавать ли инфу в д�
         answer = ''
         for el in costs:
             s = list(filter(lambda x: x[0] == el[0], result))
-            s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+            s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}" \
+                f"\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
                 f"Цена: {cost_format(el[1])}\n\n"
             answer += s
         update.message.reply_text(
@@ -299,6 +304,7 @@ def dop_question_city(update, context):  # выдавать ли инфу в д�
 
 
 def city(update, context):  # выдать инфу по введенному названию города
+    x = '-'
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
@@ -310,7 +316,8 @@ def city(update, context):  # выдать инфу по введенному н
     answer = ''
     for el in costs:
         s = list(filter(lambda x: x[0] == el[0], result))
-        s = f"* {s[0][1]}\nЧасы работы: {s[0][3]}\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+        s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}\n" \
+            f"Адрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
             f"Цена: {cost_format(el[1])}\n\n"
         answer += s
     update.message.reply_text(
@@ -394,13 +401,15 @@ def pharmacy_del(update, context):
 
 
 def pharmacy_view(update, context):
+    x = '-'
     if 'fav_pharm' not in context.user_data.keys() or context.user_data['fav_pharm'] is None:
         update.message.reply_text(f"Вы не выбрали Вашу любимую аптеку...")
     else:
         update.message.reply_text(f"Ваша любимая аптека:\n"
                                   f"\n{context.user_data['fav_pharm'][1]}\n"
                                   f"Адрес: {context.user_data['fav_pharm'][2]}\n"
-                                  f"Часы работы: {context.user_data['fav_pharm'][3]}\n"
+                                  f"Часы работы: "
+                                  f"{context.user_data['fav_pharm'][3] if context.user_data['fav_pharm'][3] is not None else x}\n"
                                   f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n")
 
 

@@ -125,6 +125,7 @@ def message_handler(token, vk_id):
                         users[user_id].req_medicine = found
                         bot.clarify_name(user_id, found)
                         users[user_id].status = 'waiting_for_clarification'
+                # пользователь выбрал препарат из списка?
                 elif users[user_id].status == 'waiting_for_clarification':
                     clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
                     WHERE name = "{msg['text']}"''').fetchone()
@@ -146,6 +147,7 @@ def message_handler(token, vk_id):
                         users[user_id].status = 'waiting_for_dose'
                     else:
                         bot.ask_med_form(user_id, users[user_id].med_form)
+                # пользователь указал дозировку?
                 elif users[user_id].status == 'waiting_for_dose':
                     found = cur.execute(f'''SELECT DISTINCT dose FROM medicine
                                         WHERE name = "{users[user_id].req_medicine}" and
@@ -156,14 +158,17 @@ def message_handler(token, vk_id):
                         bot.location_or_cancel(user_id, users[user_id])
                     else:
                         bot.ask_dose(user_id, users[user_id].dose)
+                # пользователь подтвердил выбор препарата?
                 elif users[user_id].status == 'waiting_for_location' and 'указать город' in msg['text'].lower():
                     bot.ask_city(user_id)
                     users[user_id].status = 'waiting_for_city'
+                # пользователь отменил выбор препарата?
                 elif ((users[user_id].status == 'waiting_for_location' and
                        'изменить выбор препарата' in msg['text'].lower())):
                     bot.return_msg(user_id, 'Выбор препарата сброшен. Теперь Вы можете указать его заново.')
                     users[user_id] = User(user_id)
                     users[user_id].status = 'waiting_for_medicine'
+                # "Так да или нет?"
                 elif users[user_id].status == 'waiting_for_location':
                     bot.location_or_cancel(user_id, users[user_id])
                 # пользователь указал сам город?
@@ -183,14 +188,17 @@ def message_handler(token, vk_id):
                                                 'я с этим городом пока что не работаю :(')
                     bot.shall_i_try_again(user_id)
                     users[user_id].status = 'waiting_for_again_decision'
+                # пользователь решил поискать в другом городе?
                 elif ((users[user_id].status == 'waiting_for_again_decision' and
                        msg['text'].lower() == 'посмотреть в другом городе')):
                     bot.ask_city(user_id)
                     users[user_id].status = 'waiting_for_city'
+                # пользователь решил больше ничего не искать?
                 elif ((users[user_id].status == 'waiting_for_again_decision' and
                        msg['text'].lower() == 'больше не нужно')):
                     bot.return_msg(user_id, 'Всего доброго!')
                     del users[user_id]
+                # "Так вы будете искать в другом городе или нет?"
                 elif users[user_id].status == 'waiting_for_again_decision':
                     bot.shall_i_try_again(user_id)
             except Exception as e:

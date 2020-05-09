@@ -46,6 +46,31 @@ def find_stores(cursor, city, barcode):    # Поиск конкретного �
     return tuple(tuple(list(x) + [barcode_stores[x[0]]]) for x in city_stores)
 
 
+def medicine_search(cursor, name):
+    request_result = cursor.execute(f'''SELECT DISTINCT name FROM medicine
+                                        WHERE LOWER(medicine.name) LIKE
+                                        LOWER('%{name}%')''').fetchall()
+    if not request_result:
+        return None
+    return tuple(map(lambda x: x[0], request_result))
+
+
+def form_search(cursor, name):
+    request_result = cursor.execute(f'''SELECT DISTINCT form FROM medicine
+                                        WHERE name = "{name}"''').fetchall()
+    if not request_result:
+        return None
+    return tuple(map(lambda x: x[0], request_result))
+
+
+def dose_search(cursor, name, form):
+    request_result = cursor.execute(f'''SELECT DISTINCT form, dose FROM medicine
+    WHERE name = "{name}" and form = "{form}"''').fetchall()
+    if request_result:
+        return request_result[0][0], tuple(map(lambda x: x[1], request_result))
+    return None
+
+
 class User:    # Класс, экземпляры которого будут хранить информацию о пользователе и его текущем поиске
     def __init__(self, user_id):
         self.user_id = user_id
@@ -90,52 +115,43 @@ def message_handler(token, vk_id):
                     users[user_id].status = 'waiting_for_medicine'
                 # пользователь отправил название медикамента?
                 elif users[user_id].status == 'waiting_for_medicine':
-                    db_request_result = cur.execute(f'''SELECT DISTINCT name FROM medicine
-                                                        WHERE LOWER(medicine.name) LIKE
-                                                        LOWER('%{msg['text']}%')''').fetchall()
-                    if not db_request_result:
+                    found = medicine_search(cur, msg['text'])
+                    if not found:
                         bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
                                                 'Проверьте написание и попробуйте ещё раз.')
+                    elif len(found) > 10:
+                        bot.return_msg(user_id, 'Запрос слишком неточный, сделайте его немного длиннее!')
                     else:
-                        users[user_id].req_medicine = tuple(map(lambda x: x[0], db_request_result))
-                        if len(users[user_id].req_medicine) > 10:
-                            bot.return_msg(user_id, 'Запрос слишком неточный, сделайте его немного длиннее!')
-                            users[user_id] = User(user_id)
-                            users[user_id].status = 'waiting_for_medicine'
-                        else:
-                            bot.clarify_name(user_id, users[user_id].req_medicine)
-                            users[user_id].status = 'waiting_for_clarification'
+                        users[user_id].req_medicine = found
+                        bot.clarify_name(user_id, found)
+                        users[user_id].status = 'waiting_for_clarification'
                 elif users[user_id].status == 'waiting_for_clarification':
                     clarification = cur.execute(f'''SELECT DISTINCT name FROM medicine
                     WHERE name = "{msg['text']}"''').fetchone()
-                    if clarification is None:
-                        bot.return_msg(user_id, 'Извините, не удалось найти данный препарат в базе данных. '
-                                                'Попробуйте ещё раз, выберите одно из названий на клавиатуре.')
+                    if not clarification:
+                        bot.return_msg(user_id, 'Извините, я вас не понимаю. '
+                                                'Попробуйте ещё раз, выбрав одно из названий на клавиатуре.')
                         bot.clarify_name(user_id, users[user_id].req_medicine)
                     else:
                         users[user_id].req_medicine = clarification[0]
-                        db_request_result = cur.execute(f'''SELECT DISTINCT form FROM medicine
-                                                    WHERE name = "{users[user_id].req_medicine}"''').fetchall()
-                        users[user_id].med_form = tuple(map(lambda x: x[0], db_request_result))
+                        users[user_id].med_form = form_search(cur, users[user_id].req_medicine)
                         bot.ask_med_form(user_id, users[user_id].med_form)
                         users[user_id].status = 'waiting_for_med_form'
                 # пользователь указал форму выпуска?
                 elif users[user_id].status == 'waiting_for_med_form':
-                    db_request_result = cur.execute(f'''SELECT DISTINCT form, dose FROM medicine
-                    WHERE name = "{users[user_id].req_medicine}" and form = "{msg['text']}"''').fetchall()
-                    if db_request_result:
-                        users[user_id].med_form = db_request_result[0][0]
-                        users[user_id].dose = tuple(map(lambda x: x[1], db_request_result))
+                    found = dose_search(cur, users[user_id].req_medicine, msg['text'])
+                    if found:
+                        users[user_id].med_form, users[user_id].dose = found
                         bot.ask_dose(user_id, users[user_id].dose)
                         users[user_id].status = 'waiting_for_dose'
                     else:
                         bot.ask_med_form(user_id, users[user_id].med_form)
                 elif users[user_id].status == 'waiting_for_dose':
-                    db_request_result = cur.execute(f'''SELECT DISTINCT dose FROM medicine
+                    found = cur.execute(f'''SELECT DISTINCT dose FROM medicine
                                         WHERE name = "{users[user_id].req_medicine}" and
                                         form = "{users[user_id].med_form}" and dose = "{msg['text']}"''').fetchone()
-                    if db_request_result:
-                        users[user_id].dose = db_request_result[0]
+                    if found:
+                        users[user_id].dose = found[0]
                         users[user_id].status = 'waiting_for_location'
                         bot.location_or_cancel(user_id, users[user_id])
                     else:
@@ -153,7 +169,7 @@ def message_handler(token, vk_id):
                 # пользователь указал сам город?
                 elif users[user_id].status == 'waiting_for_city':
                     db_request_result = cur.execute(f'''SELECT DISTINCT city FROM pharmacy
-                                                        WHERE LOWER(pharmacy.city) LIKE
+                                                        WHERE LOWER(pharmacy.city) =
                                                         LOWER('{msg['text']}')''').fetchone()
                     if db_request_result:
                         users[user_id].city = db_request_result[0]

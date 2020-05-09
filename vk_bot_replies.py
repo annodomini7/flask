@@ -20,12 +20,27 @@ class VkBotReplies:
         self.again_keyboard.add_button('Больше не нужно',
                                        color=VkKeyboardColor.NEGATIVE)
 
+    def help(self, send_to):
+        help_msg = 'Введите название лекарства, правильно ответьте на мои вопросы и узнайте, ' \
+                   'где можно купить интересующий Вас препарат.\n' \
+                   'На данный момент я знаю только лекарства, ' \
+                   'предназначенные для лечения заболевания респираторной системы ' \
+                   '(по классификации АТХ).\n\n' \
+                   '"Тут должно быть что-то умное и полезное"\n' \
+                   '© подвал нашего сайта\n\n' \
+                   '[id331822495|Коган Анна]: разработчик █████\n' \
+                   '[id251482329|Матевосян Артем]: разработчик [ДАННЫЕ УДАЛЕНЫ]'
+        self.vk.messages.send(peer_id=send_to,
+                              random_id=random.randint(0, 2 ** 64),
+                              message=help_msg)
+
     def start(self, send_to):    # Первое сообщение, приветствие и вопрос о лекарстве
         username = self.vk.users.get(user_ids=send_to)[0]['first_name']
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
                               message=f'Здравствуйте, {username}! Какой препарат Вам необходимо найти? '
-                              f'Напишите его название кириллицей.')
+                              f'Напишите его название кириллицей.\nТакже вы можете в любой момент вызвать справку, '
+                              f'написав "помощь" без кавычек.')
 
     def clarify_name(self, send_to, names):
         clarify_keyboard = VkKeyboard(one_time=True)
@@ -77,7 +92,7 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message='Укажите свой город, чтобы я нашёл аптеки.')
 
-    def send_results(self, send_to, info):    # Высылает результат.
+    def send_results(self, send_to, info):    # Формирует и высылает результат.
         text = '\n\n'.join([f'★ {i[1]}\n'
                             f'Время работы: {i[3]}\n'
                             f'Адрес: {i[2]}\n'

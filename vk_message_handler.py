@@ -7,8 +7,8 @@ import sqlite3
 import re
 
 
-VK_BOT_ID = 000000000
-VK_BOT_TOKEN = 'token'
+VK_BOT_ID = 194193564
+VK_BOT_TOKEN = '323c38229e86b2ad629e1dda5ae6ef7c0f97d3c304677984c57d889f737f8b1d08b62a7851a510895ab8c'
 
 
 def sqlite_like(template_, value_):    # До следующего комментария идут функции для решения проблем поиска в БД
@@ -37,7 +37,7 @@ def sqlite_nocase_collation(value1_, value2_):
            (value1_.encode('utf-8').lower() > value2_.encode('utf-8').lower())
 
 
-def find_stores(cursor, city, barcode):
+def find_stores(cursor, city, barcode):    # Поиск конкретного лекарства в аптеках по его коду и городу
     barcode_stores = cursor.execute(f'''SELECT pharmacy_id, cost FROM data WHERE barcode = {barcode}''').fetchall()
     barcode_stores_ids = tuple(map(lambda x: x[0], barcode_stores))
     barcode_stores = {x[0]: x[1] for x in barcode_stores}
@@ -77,8 +77,14 @@ def message_handler(token, vk_id):
             user_id = event.object.message['from_id']
             msg = event.object.message
             try:
+                # пользователю нужна справка?
+                if msg['text'].lower() == 'помощь':
+                    bot.help(user_id)
+                # Пасхалка!
+                elif msg['text'].lower() == 'галоперидол':
+                    bot.return_msg(user_id, 'А ну в палату! Колоть будем по расписанию!')
                 # пользователь только начал диалог?
-                if users.get(user_id, None) is None:
+                elif users.get(user_id, None) is None:
                     users[user_id] = User(user_id)
                     bot.start(user_id)
                     users[user_id].status = 'waiting_for_medicine'

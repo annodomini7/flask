@@ -102,7 +102,7 @@ def start(update, context):
     return 1
 
 
-def conv_handler(update, context):
+def conv_handler(update, context):  # функция, руководящая основным диалогом
     if 'phase' not in context.user_data.keys():
         return start(update, context)
     if context.user_data['phase'] == 1:
@@ -123,7 +123,7 @@ def conv_handler(update, context):
         context.user_data['phase'] = other_city_or_repeat(update, context)
 
 
-def name(update, context):
+def name(update, context):  # обработка введенного текста как название препарата
     context.user_data['name'] = update.message.text
     result = medicine_ask(update.message.text)
     if context.user_data['log'] is False:
@@ -157,7 +157,7 @@ def name(update, context):
     return 2
 
 
-def form(update, context):
+def form(update, context):  # обработка введенного как форма выпуска
     context.user_data['log'] = True
     context.user_data['form'] = update.message.text.lower()
     result = list(filter(lambda x: x[2] == context.user_data['form'], context.user_data['result']))
@@ -172,7 +172,7 @@ def form(update, context):
     return 3
 
 
-def dose(update, context):
+def dose(update, context):  # обработка введенного как доза
     context.user_data['dose'] = update.message.text
     result = list(filter(lambda x: x[3] == context.user_data['dose'], context.user_data['result']))
     if result == []:
@@ -186,7 +186,7 @@ def dose(update, context):
     return 4
 
 
-def control(update, context):
+def control(update, context):  # проверка на вывод инфы о препарате или о repeat
     text = update.message.text
     if text == 'Да, все верно':
         if 'fav_pharm' in context.user_data.keys() and context.user_data['fav_pharm'] is not None:
@@ -232,7 +232,7 @@ def control(update, context):
         return 4
 
 
-def dop_question(update, context):
+def dop_question(update, context):  # обработка на выдачу инфы в других аптеках
     text = update.message.text
     if text == 'Нет, спасибо':
         update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
@@ -270,7 +270,7 @@ def dop_question(update, context):
     return 6
 
 
-def dop_question_city(update, context):
+def dop_question_city(update, context):  # выдавать ли инфу в других городах
     text = update.message.text
     if text == 'Да':
         result = pharmacy_ask(context.user_data['city'])
@@ -298,7 +298,7 @@ def dop_question_city(update, context):
     return 7
 
 
-def city(update, context):
+def city(update, context):  # выдать инфу по введенному названию города
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
@@ -324,7 +324,7 @@ def city(update, context):
     return 8
 
 
-def other_city_or_repeat(update, context):
+def other_city_or_repeat(update, context):  # разрешение на начало нового цикла общения
     text = update.message.text
     if text == 'Да':
         update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
@@ -444,3 +444,12 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# 1 - name()
+# 2 - form()
+# 3 - dose()
+# 4 - control()
+# 5 - city()
+# 6 - dop_question()
+# 7 - dop_question_city()
+# 8 - other_city_or_repeat()

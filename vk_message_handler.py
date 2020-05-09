@@ -11,7 +11,7 @@ VK_BOT_ID = 000000000
 VK_BOT_TOKEN = 'token'
 
 
-def sqlite_like(template_, value_):
+def sqlite_like(template_, value_):    # До следующего комментария идут функции для решения проблем поиска в БД
     return sqlite_like_escape(template_, value_, None)
 
 
@@ -35,6 +35,15 @@ def sqlite_upper(value_):
 def sqlite_nocase_collation(value1_, value2_):
     return (value1_.encode('utf-8').lower() < value2_.encode('utf-8').lower()) -\
            (value1_.encode('utf-8').lower() > value2_.encode('utf-8').lower())
+
+
+def find_stores(cursor, city, barcode):
+    barcode_stores = cursor.execute(f'''SELECT pharmacy_id, cost FROM data WHERE barcode = {barcode}''').fetchall()
+    barcode_stores_ids = tuple(map(lambda x: x[0], barcode_stores))
+    barcode_stores = {x[0]: x[1] for x in barcode_stores}
+    city_stores = cursor.execute(f'''SELECT id, name, address, hours, phone FROM pharmacy
+                                     WHERE city = "{city}" AND id in {barcode_stores_ids}''').fetchall()
+    return tuple(tuple(list(x) + [barcode_stores[x[0]]]) for x in city_stores)
 
 
 class User:    # Класс, экземпляры которого будут хранить информацию о пользователе и его текущем поиске
@@ -145,7 +154,7 @@ def message_handler(token, vk_id):
                         users[user_id].barcode = cur.execute(f'''SELECT DISTINCT barcode FROM medicine
                         WHERE name = '{users[user_id].req_medicine}' and form = '{users[user_id].med_form}'
                         and dose = "{users[user_id].dose}"''').fetchone()[0]
-                        bot.send_results(user_id, users[user_id].barcode)
+                        bot.send_results(user_id, find_stores(cur, users[user_id].city, users[user_id].barcode))
                     else:
                         bot.return_msg(user_id, 'Я не знаю такой город, проверьте написание! '
                                                 'Если вы уверены, что написано верно, значит, '

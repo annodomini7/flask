@@ -77,10 +77,17 @@ class VkBotReplies:
                               random_id=random.randint(0, 2 ** 64),
                               message='Укажите свой город, чтобы я нашёл аптеки.')
 
-    def send_results(self, send_to, info):    # Высылает результат. Пока что работает в тестовом режиме.
+    def send_results(self, send_to, info):    # Высылает результат.
+        text = '\n\n'.join([f'★ {i[1]}\n'
+                            f'Время работы: {i[3]}\n'
+                            f'Адрес: {i[2]}\n'
+                            f'Телефон: {i[4]}\n'
+                            f'Цена: {int(float(i[5].replace(",", ".")))} рублей '
+                            f'{int((float(i[5].replace(",", ".")) - int(float(i[5].replace(",", ".")))) * 100)} '
+                            f'копеек'.replace("None", "неизвестно") for i in info])
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),
-                              message=f'Вот то, что мне удалось найти!\n{info}')
+                              message=f'Вот то, что мне удалось найти!\n\n{text}')
 
     def shall_i_try_again(self, send_to):    # "Хотите, чтобы я поискал в другом городе?"
         self.vk.messages.send(peer_id=send_to,

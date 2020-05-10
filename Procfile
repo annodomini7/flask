@@ -1,1 +1,2 @@
-web: python multiprocess_main.py
+worker: python multiprocess_main.py
+web: gunicorn main:app

@@ -1,1 +1,1 @@
-worker: python multiprocess_main.py
+web: python multiprocess_main.py

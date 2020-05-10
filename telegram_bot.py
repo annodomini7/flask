@@ -425,9 +425,9 @@ def help(update, context):
                               "Коган Анна: Разработчик █████;\nМатевосян Артем: разработчик [ДАННЫЕ УДАЛЕНЫ].")
 
 
-def main():
+def main_tg():
     REQUEST_KWARGS = {
-        'proxy_url': 'socks5://148.251.234.93:1080', }
+        'proxy_url': 'socks5://176.9.221.34:1080', }
 
     updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)
@@ -455,7 +455,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main_tg()
 
 # 1 - name()
 # 2 - form()

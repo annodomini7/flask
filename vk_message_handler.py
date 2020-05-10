@@ -7,10 +7,6 @@ import sqlite3
 import re
 
 
-VK_BOT_ID = 194193564
-VK_BOT_TOKEN = '323c38229e86b2ad629e1dda5ae6ef7c0f97d3c304677984c57d889f737f8b1d08b62a7851a510895ab8c'
-
-
 def sqlite_like(template_, value_):    # До следующего комментария идут функции для решения проблем поиска в БД
     return sqlite_like_escape(template_, value_, None)
 
@@ -207,9 +203,15 @@ def message_handler(token, vk_id):
                     del users[user_id]
 
 
-if __name__ == '__main__':
+def main_vk():
+    vk_bot_id = 194193564
+    vk_bot_token = '323c38229e86b2ad629e1dda5ae6ef7c0f97d3c304677984c57d889f737f8b1d08b62a7851a510895ab8c'
     while True:
         try:
-            message_handler(VK_BOT_TOKEN, VK_BOT_ID)
+            message_handler(vk_bot_token, vk_bot_id)
         except requests.exceptions.ReadTimeout:
             time.sleep(3)
+
+
+if __name__ == '__main__':
+    main_vk()

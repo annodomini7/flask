@@ -32,7 +32,7 @@ def load_user(pharmacy_id):
     return session.query(Pharmacy).get(pharmacy_id)
 
 
-def main():
+def main_site():
     db_session.global_init("db/pharmacy.db")
     app.run()
 

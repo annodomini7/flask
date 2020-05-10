@@ -28,6 +28,7 @@ CITIES = {'Ставропольский край': ['Буденновск', 'Г�
 
 @login_manager.user_loader
 def load_user(pharmacy_id):
+    db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     return session.query(Pharmacy).get(pharmacy_id)
 
@@ -45,6 +46,7 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Пароли не совпадают")
+        db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
         if session.query(Pharmacy).filter(Pharmacy.name == form.name.data).first():
             return render_template('register.html', title='Регистрация',
@@ -72,6 +74,7 @@ def reqister():
 @app.route('/data/<int:pharmacy_id>', methods=['POST'])  # функция-обработчик поступающих json-запросов
 def data_post(pharmacy_id):
     data = request.get_json()
+    db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     pharm = session.query(Pharmacy).get(pharmacy_id)
     if not pharm:
@@ -96,6 +99,7 @@ def data_post(pharmacy_id):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
+        db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
         user = session.query(Pharmacy).filter(Pharmacy.name == form.username.data).first()
         if user and user.check_password(form.password.data):
@@ -118,6 +122,7 @@ def logout():
 @login_required
 def profile():
     id = current_user.get_id()
+    db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
     return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
@@ -130,6 +135,7 @@ def edit_profile():
     id = current_user.get_id()
     form = EditForm()
     if request.method == "GET":
+        db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
         pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
@@ -141,6 +147,7 @@ def edit_profile():
         else:
             abort(404)
     if form.validate_on_submit():
+        db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
         pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
@@ -158,6 +165,7 @@ def edit_profile():
 
 @app.route('/pharmacy/<city>')
 def pharmacy_screen(city):
+    db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     data = []
     pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)

@@ -5,7 +5,7 @@ from multiprocessing import Process
 
 
 if __name__ == '__main__':
-    procs = [Process(target=main_site), Process(target=main_vk), Process(target=main_tg)]
+    procs = [Process(target=main_vk), Process(target=main_tg)]
     for proc in procs:
         proc.start()
     for proc in procs:

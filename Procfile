@@ -1,0 +1,1 @@
+worker: python multiprocess_main.py

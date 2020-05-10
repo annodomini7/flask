@@ -81,8 +81,7 @@ def data_post(pharmacy_id):
         return jsonify({'error': 404})
     if pharm.check_password(data["password"]) is False:
         return jsonify({'error': 403})
-    old_data = session.query(Data).filter(Data.id == pharmacy_id).all()
-    session.delete(old_data)
+    session.query(Data).filter(Data.pharmacy_id == pharmacy_id).delete()
     session.commit()
     for el in data["data"]:
         new = Data()

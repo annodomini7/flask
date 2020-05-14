@@ -15,6 +15,8 @@ class Pharmacy(SqlAlchemyBase, UserMixin):
     address = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     hours = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     phone = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    region = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    login = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     orm.relation("Data", back_populates='pharmacy')
 

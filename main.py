@@ -1,29 +1,19 @@
-from flask import Flask, make_response, jsonify, redirect, render_template
-from flask_restful import reqparse, abort, Api, Resource, request
+from flask import Flask, jsonify, redirect, render_template
+from flask_restful import abort, Api, request
 from flask_login import current_user, LoginManager, logout_user, login_required, login_user
 from data import db_session
 from data.pharmacy import Pharmacy
 from data.data import Data
-from data.medicine import Medicine
 from register_form import RegisterForm
 from login_form import LoginForm
 from edit_form import EditForm
-from random import shuffle
+import sqlite3
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
-
-CITIES = {'Ставропольский край': ['Буденновск', 'Георгиевск', 'Ессентуки', 'Железноводск', 'Зеленокумск', 'Изобильный',
-                                  'Ипатово', 'Кисловодск', 'Лермонтов', 'Минеральные Воды', 'Михайловск',
-                                  'Невинномысск', 'Новопавловск', 'Пятигорск', 'Светлоград', 'Ставрополь'],
-          'Краснодарский край': ['Абинск', 'Адлер', 'Анапа', 'Белореченск', 'Геленджик', 'Горячий Ключ', 'Кореновск',
-                                 'Краснодар', 'Кропоткин', 'Лабинск', 'Новороссийск', 'Сочи', 'Тимашевск', 'Туапсе'],
-          'Ростовская область': ['Азов', 'Батайск', 'Гуково', 'Зерноград', 'Каменск-Шахтинский ', 'Миллерово',
-                                 'Новочеркасск', 'Новошахтинск', 'Ростов-на-Дону', 'Сальск', 'Семикаракорск',
-                                 'Таганрог', 'Цимлянск']}
 
 
 @login_manager.user_loader
@@ -48,25 +38,23 @@ def reqister():
                                    message="Пароли не совпадают")
         db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
-        if session.query(Pharmacy).filter(Pharmacy.name == form.name.data).first():
+        if session.query(Pharmacy).filter(Pharmacy.login == form.login.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
-                                   message="Такой пользователь уже есть")
-        if form.region.data in CITIES.keys():
-            if form.city.data not in CITIES[form.region.data]:
-                CITIES[form.region.data].append(form.city.data)
-        else:
-            CITIES[form.region.data] = [form.city.data]
+                                   message="Пользователь с таким логином существует. Придумайте другой логин")
         user = Pharmacy(
             name=form.name.data,
-            city=form.city.data,
+            city=form.city.data.capitalize(),
             address=form.address.data,
             hours=form.hours.data,
-            phone=form.phone.data
+            phone=form.phone.data,
+            region=request.form['region'],
+            login=form.login.data
         )
         user.set_password(form.password.data)
         session.add(user)
         session.commit()
+        login_user(user)
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
@@ -100,7 +88,7 @@ def login():
     if form.validate_on_submit():
         db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
-        user = session.query(Pharmacy).filter(Pharmacy.name == form.username.data).first()
+        user = session.query(Pharmacy).filter(Pharmacy.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
@@ -125,12 +113,13 @@ def profile():
     session = db_session.create_session()
     pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
     return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
-                           hours=pharm.hours, phone=pharm.phone, id=id)
+                           hours=pharm.hours, phone=pharm.phone, id=id, login=pharm.login, region=pharm.region)
 
 
 @app.route('/profile_edit', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    region = ''
     id = current_user.get_id()
     form = EditForm()
     if request.method == "GET":
@@ -138,28 +127,36 @@ def edit_profile():
         session = db_session.create_session()
         pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
+            form.login.data = pharm.login
             form.name.data = pharm.name
             form.city.data = pharm.city
             form.address.data = pharm.address
             form.hours.data = pharm.hours
             form.phone.data = pharm.phone
+            region = pharm.region
         else:
             abort(404)
     if form.validate_on_submit():
         db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
+        if session.query(Pharmacy).filter(Pharmacy.login == form.login.data).first().id != current_user.get_id():
+            return render_template('profile_edit.html', title='Редактирование профиля',
+                                   form=form,
+                                   message="Пользователь с таким логином существует. Придумайте другой логин")
         pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
         if pharm:
+            pharm.login = form.login.data
             pharm.name = form.name.data
             pharm.city = form.city.data
             pharm.address = form.address.data
             pharm.hours = form.hours.data
             pharm.phone = form.phone.data
+            pharm.region = request.form['region']
             session.commit()
             return redirect('/')
         else:
             abort(404)
-    return render_template('profile_edit.html', title='Редактирование профиля', form=form)
+    return render_template('profile_edit.html', title='Редактирование профиля', form=form, region=region)
 
 
 @app.route('/pharmacy/<city>')
@@ -167,8 +164,11 @@ def pharmacy_screen(city):
     db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     data = []
+    print(city)
     pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)
+    print(pharmacy)
     for pharm in pharmacy:
+        print(pharm)
         data.append({'name': pharm.name, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 
@@ -177,13 +177,23 @@ def pharmacy_screen(city):
 
 @app.route('/')
 def main_screen():
-    data = CITIES.keys()
+    con = sqlite3.connect("db/pharmacy.db")
+    cur = con.cursor()
+    data = list(set(cur.execute(
+        f"""select region
+        from pharmacy""").fetchall()))
+    data = sorted(list(map(lambda x: x[0], data)))
     return render_template('main_screen.html', title='Главная', data=data)
 
 
 @app.route('/<region>')
 def city_screen(region):
-    data = CITIES[region]
+    con = sqlite3.connect("db/pharmacy.db")
+    cur = con.cursor()
+    data = list(set(cur.execute(
+        f"""select city
+        from pharmacy where region == '{region}'""").fetchall()))
+    data = sorted(list(map(lambda x: x[0], data)))
     return render_template('city_screen.html', title='Города', data=data, region=region)
 
 

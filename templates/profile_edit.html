@@ -5,52 +5,152 @@
 <form action="" method="post">
     {{ form.hidden_tag() }}
     {{ form.csrf_token }}
-    <p>
+    <div class="form-group">
+        {{ form.login.label }}<br>
+        {{ form.login(class="form-control") }}<br>
+        {% for error in form.login.errors %}
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="form-group">
         {{ form.name.label }}<br>
         {{ form.name(class="form-control") }}<br>
         {% for error in form.name.errors %}
-    <p class="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
-    </p>
-    <p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="form-group">
+        <label for="exampleFormControlSelect1">Выберите Ваш регион</label><br>
+        <select name="region" class="form-control" id="exampleFormControlSelect1">
+            <option selected value="{{region}}">{{region}}</option>
+            <option value="Республика Адыгея">Республика Адыгея</option>
+            <option value="Республика Алтай">Республика Алтай</option>
+            <option value="Республика Башкортостан">Республика Башкортостан</option>
+            <option value="Республика Бурятия">Республика Бурятия</option>
+            <option value="Республика Дагестан">Республика Дагестан</option>
+            <option value="Республика Ингушетия">Республика Ингушетия</option>
+            <option value="Кабардино-Балкарская Республика">Кабардино-Балкарская Республика</option>
+            <option value="Республика Калмыкия">Республика Калмыкия</option>
+            <option value="Карачаево-Черкесская Республика">Карачаево-Черкесская Республика</option>
+            <option value="Республика Карелия">Республика Карелия</option>
+            <option value="Республика Коми">Республика Коми</option>
+            <option value="Республика Крым">Республика Крым</option>
+            <option value="Республика Марий Эл">Республика Марий Эл</option>
+            <option value="Республика Мордовия">Республика Мордовия</option>
+            <option value="Республика Саха (Якутия)">Республика Саха (Якутия)</option>
+            <option value="Республика Северная Осетия - Алания">Республика Северная Осетия - Алания</option>
+            <option value="Республика Татарстан">Республика Татарстан</option>
+            <option value="Республика Тыва">Республика Тыва</option>
+            <option value="Удмуртская Республика">Удмуртская Республика</option>
+            <option value="Республика Хакасия">Республика Хакасия</option>
+            <option value="Чеченская Республика">Чеченская Республика</option>
+            <option value="Чувашская Республика">Чувашская Республика</option>
+            <option value="Алтайский край">Алтайский край</option>
+            <option value="Забайкальский край">Забайкальский край</option>
+            <option value="Камчатский край">Камчатский край</option>
+            <option value="Краснодарский край">Краснодарский край</option>
+            <option value="Красноярский край">Красноярский край</option>
+            <option value="Пермский край">Пермский край</option>
+            <option value="Приморский край">Приморский край</option>
+            <option value="Ставропольский край">Ставропольский край</option>
+            <option value="Хабаровский край">Хабаровский край</option>
+            <option value="Амурская область">Амурская область</option>
+            <option value="Архангельская область">Архангельская область</option>
+            <option value="Астраханская область">Астраханская область</option>
+            <option value="Белгородская область">Белгородская область</option>
+            <option value="Брянская область">Брянская область</option>
+            <option value="Владимирская область">Владимирская область</option>
+            <option value="Волгоградская область">Волгоградская область</option>
+            <option value="Вологодская область">Вологодская область</option>
+            <option value="Воронежская область">Воронежская область</option>
+            <option value="Ивановская область">Ивановская область</option>
+            <option value="Иркутская область">Иркутская область</option>
+            <option value="Калининградская область">Калининградская область</option>
+            <option value="Калужская область">Калужская область</option>
+            <option value="Кемеровская область">Кемеровская область</option>
+            <option value="Кировская область">Кировская область</option>
+            <option value="Костромская область">Костромская область</option>
+            <option value="Курганская область">Курганская область</option>
+            <option value="Курская область">Курская область</option>
+            <option value="Ленинградская область">Ленинградская область</option>
+            <option value="Липецкая область">Липецкая область</option>
+            <option value="Магаданская область">Магаданская область</option>
+            <option value="Московская область">Московская область</option>
+            <option value="Мурманская область">Мурманская область</option>
+            <option value="Нижегородская область">Нижегородская область</option>
+            <option value="Новгородская область">Новгородская область</option>
+            <option value="Новосибирская область">Новосибирская область</option>
+            <option value="Омская область">Омская область</option>
+            <option value="Оренбургская область">Оренбургская область</option>
+            <option value="Орловская область">Орловская область</option>
+            <option value="Пензенская область">Пензенская область</option>
+            <option value="Псковская область">Псковская область</option>
+            <option value="Ростовская область">Ростовская область</option>
+            <option value="Рязанская область">Рязанская область</option>
+            <option value="Самарская область">Самарская область</option>
+            <option value="Саратовская область">Саратовская область</option>
+            <option value="Сахалинская область">Сахалинская область</option>
+            <option value="Свердловская область">Свердловская область</option>
+            <option value="Смоленская область">Смоленская область</option>
+            <option value="Тамбовская область">Тамбовская область</option>
+            <option value="Тверская область">Тверская область</option>
+            <option value="Томская область">Томская область</option>
+            <option value="Тульская область">Тульская область</option>
+            <option value="Тюменская область">Тюменская область</option>
+            <option value="Ульяновская область">Ульяновская область</option>
+            <option value="Челябинская область">Челябинская область</option>
+            <option value="Ярославская область">Ярославская область</option>
+            <option value="Москва">Москва</option>
+            <option value="Санкт-Петербург">Санкт-Петербург</option>
+            <option value="Севастополь">Севастополь</option>
+            <option value="Еврейская АО">Еврейская АО</option>
+            <option value="Ненецкий АО">Ненецкий АО</option>
+            <option value="Ханты-Мансийский АО">Ханты-Мансийский АО</option>
+            <option value="Чукотский АО">Чукотский АО</option>
+            <option value="Ямало-Ненецкий АО">Ямало-Ненецкий АО</option>
+        </select><br>
+    </div>
+    <div class="form-group">
         {{ form.city.label }}<br>
         {{ form.city(class="form-control") }}<br>
         {% for error in form.city.errors %}
-    <p class="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
-    </p>
-    <p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="form-group">
         {{ form.address.label }}<br>
         {{ form.address(class="form-control") }}<br>
         {% for error in form.address.errors %}
-    <p class="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
-    </p>
-    <p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="form-group">
         {{ form.hours.label }}<br>
         {{ form.hours(class="form-control") }}<br>
         {% for error in form.hours.errors %}
-    <p class="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
-    </p>
-    <p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
+    <div class="form-group">
         {{ form.phone.label }}<br>
-        {{ form.phone(class="form-control") }}<br>
+        {{ form.phone(class="form-control", type="tel") }}<br>
         {% for error in form.phone.errors %}
-    <p class="alert alert-danger" role="alert">
-        {{ error }}
-    </p>
-    {% endfor %}
-    </p>
+        <p class="alert alert-danger" role="alert">
+            {{ error }}
+        </p>
+        {% endfor %}
+    </div>
     <p>{{ form.submit(type="submit", class="btn btn-dark") }}</p>
-    {{message}}
+    <p>{{message}}</p>
 </form>
 {% endblock %}

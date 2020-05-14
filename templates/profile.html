@@ -1,23 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ name }}</h2>
+<h2 class="h2">{{ name }}</h2>
 <table class="table table-bordered">
     <tr class="table-default">
-        <td>City</td>
-        <td>Address</td>
-        <td>Hours of work</td>
-        <td>Phone</td>
+        <td>Логин</td>
+        <td>Регион</td>
+        <td>Город</td>
+        <td>Адрес</td>
+        <td>Часы работы</td>
+        <td>Телефон</td>
     </tr>
     <tr class="table-primary">
+        <td>{{ login }}</td>
+        <td>{{ region }}</td>
         <td>{{ city }}</td>
         <td>{{ address }}</td>
         <td>{{ hours }}</td>
         <td>{{ phone }}</td>
     </tr>
 </table>
-<p>Данные по остаткам необходимо отправлять по ссылке <a href="/data/{{id}}">/data/{{id}}</a></p>
-<p>
+<p class="p">Данные по остаткам необходимо отправлять по ссылке <a href="/data/{{id}}">/data/{{id}}</a></p>
+<p class="p">
     <a class="btn btn-outline-danger" href="/logout">Выйти</a>
     <a class="btn btn-outline-success" href="/profile_edit">Редактировать профиль</a>
 </p>

@@ -1,6 +1,5 @@
 from telegram_bot import main_tg
 from vk_message_handler import main_vk
-from main import main_site
 from multiprocessing import Process
 
 

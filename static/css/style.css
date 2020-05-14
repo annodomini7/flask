@@ -37,6 +37,7 @@ article{
 }
 .div{
 block:inline-block;
+text-align: center;
 }
 
 .message{

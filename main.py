@@ -112,8 +112,10 @@ def profile():
     db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     pharm = session.query(Pharmacy).filter(Pharmacy.id == id).first()
-    return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city, address=pharm.address,
-                           hours=pharm.hours, phone=pharm.phone, id=id, login=pharm.login, region=pharm.region)
+    return render_template('profile.html', title='Профиль', name=pharm.name, city=pharm.city,
+                           address=pharm.address,
+                           hours=pharm.hours, phone=pharm.phone, id=id, login=pharm.login,
+                           region=pharm.region)
 
 
 @app.route('/profile_edit', methods=['GET', 'POST'])
@@ -139,7 +141,8 @@ def edit_profile():
     if form.validate_on_submit():
         db_session.global_init("db/pharmacy.db")
         session = db_session.create_session()
-        if session.query(Pharmacy).filter(Pharmacy.login == form.login.data).first().id != current_user.get_id():
+        if session.query(Pharmacy).filter(
+                Pharmacy.login == form.login.data).first().id != current_user.get_id():
             return render_template('profile_edit.html', title='Редактирование профиля',
                                    form=form,
                                    message="Пользователь с таким логином существует. Придумайте другой логин")
@@ -164,11 +167,8 @@ def pharmacy_screen(city):
     db_session.global_init("db/pharmacy.db")
     session = db_session.create_session()
     data = []
-    print(city)
     pharmacy = session.query(Pharmacy).filter(Pharmacy.city == city)
-    print(pharmacy)
     for pharm in pharmacy:
-        print(pharm)
         data.append({'name': pharm.name, 'address': pharm.address, 'hours': pharm.hours,
                      'phone': pharm.phone})
 

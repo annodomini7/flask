@@ -5,14 +5,14 @@
 
 <div class="card-group">
     <div class="card bg-light mb-3">
-        <div class="card-header">Регионы, с которыми мы работаем</div>
+        <div class="card-header">{{header}}</div>
         <div class="card-body">
             <table class="table table-bordered">
                 <tbody>
                 {%for i in data%}
                 <tr>
                     <td>
-                        <a href="/{{i}}" class="card-text">{{i}}</a>
+                        <a href="{{path}}{{i}}" class="card-text">{{i}}</a>
                     </td>
                 </tr>
                 {%endfor%}

@@ -1,6 +1,5 @@
 .card-group{
-margin-left:10px;
-margin-right:10px;
+    margin:20px auto 20px;
 }
 
 .card{
@@ -34,30 +33,40 @@ margin-right:10px;
   margin:auto;
 }
 article{
-    webkit-column-count:2;
-    moz-column-count:2;
-    column-count:2;
-    margin: 40px;
-    display:inline-block;
+  webkit-column-count:2;
+  moz-column-count:2;
+  column-count:2;
+  margin: 40px;
+  display:inline-block;
 }
 .div{
-block:inline-block;
-text-align: center;
+  block:inline-block;
+  text-align: center;
 }
 
 .message{
-color:#ff2222;
+  color:#ff2222;
 }
 .card-group{
-margin:40px;
+  margin:40px;
 }
 
 .button{}
 
 .p{
-margin:20px 0 20px 0;
+  margin:20px 0 20px 0;
 }
 
 .h2{
-margin:20px 0 20px 0;
+  margin:20px 0 20px 0;
+}
+.instruction_color{
+  width:70%;
+  margin:20px auto 20px;
+  padding:20px;
+  background-color:#FFF0C8;
+}
+.instruction{
+  width:70%;
+  margin:20px auto 5px;
 }

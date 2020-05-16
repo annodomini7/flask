@@ -183,7 +183,9 @@ def main_screen():
         f"""select region
         from pharmacy""").fetchall()))
     data = sorted(list(map(lambda x: x[0], data)))
-    return render_template('main_screen.html', title='Главная', data=data)
+    header = 'Регионы, с которыми мы работаем'
+    path = '/'
+    return render_template('main_screen.html', title='Главная', data=data, header=header, path=path)
 
 
 @app.route('/<region>')
@@ -194,7 +196,14 @@ def city_screen(region):
         f"""select city
         from pharmacy where region == '{region}'""").fetchall()))
     data = sorted(list(map(lambda x: x[0], data)))
-    return render_template('city_screen.html', title='Города', data=data, region=region)
+    header = f'{region}: города, с которыми мы работаем'
+    path = '/pharmacy/'
+    return render_template('main_screen.html', title='Главная', data=data, header=header, path=path)
+
+
+@app.route('/instruction')
+def instruction():
+    return render_template('instruction.html', title='Инструкция')
 
 
 if __name__ == '__main__':

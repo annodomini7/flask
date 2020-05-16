@@ -150,7 +150,10 @@
         </p>
         {% endfor %}
     </div>
-    <p>{{ form.submit(type="submit", class="btn btn-dark") }}</p>
-    <p>{{message}}</p>
+    <p>
+        {{ form.submit(type="submit", class="btn btn-dark") }}
+        <a class="btn btn-dark" href="/profile">Отменить</a>
+    </p>
+    <p class="message">{{message}}</p>
 </form>
 {% endblock %}

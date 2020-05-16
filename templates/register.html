@@ -41,7 +41,8 @@
             <option value="Республика Марий Эл">Республика Марий Эл</option>
             <option value="Республика Мордовия">Республика Мордовия</option>
             <option value="Республика Саха (Якутия)">Республика Саха (Якутия)</option>
-            <option value="Республика Северная Осетия - Алания">Республика Северная Осетия - Алания</option>
+            <option value="Республика Северная Осетия - Алания">Республика Северная Осетия - Алания
+            </option>
             <option value="Республика Татарстан">Республика Татарстан</option>
             <option value="Республика Тыва">Республика Тыва</option>
             <option value="Удмуртская Республика">Удмуртская Республика</option>
@@ -168,6 +169,6 @@
         {% endfor %}
     </div>
     <p>{{ form.submit(type="submit", class="btn btn-dark") }}</p>
-    <p>{{message}}</p>
+    <p class="message">{{message}}</p>
 </form>
 {% endblock %}

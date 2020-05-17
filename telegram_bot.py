@@ -91,6 +91,13 @@ def cost_format(cost):
     return format_cost
 
 
+def pharmacy_format(s):
+    x = '-'
+    return f"* {s[1]}\nЧасы работы: {s[3] if s[3] is not None else x}\nАдрес: {s[2]}\n" \
+           f"Телефон: {phone_format(s[4])}\nСсылка на карты: " \
+           f"https://maps.yandex.ru/?source=serp_navig&text={''.join(s[2].split())}\n"
+
+
 def start(update, context):
     user = update.message.from_user.first_name
     update.message.reply_text(
@@ -133,8 +140,9 @@ def name(update, context):  # обработка введенного текст
                 "К сожалению я не понимаю Вас. Выберите нужный препарат на высвечиваемой клавиатуре.")
             return 1
     if result == []:
-        update.message.reply_text('Извините, такого лекарства в моей базе нет, проверьте правильность написания. '
-                                  'Если всё верно, значит я с этим препаратом не работаю :(')
+        update.message.reply_text(
+            'Извините, такого лекарства в моей базе нет, проверьте правильность написания. '
+            'Если всё верно, значит я с этим препаратом не работаю :(')
         return 1
     names = set([el[1] for el in result])
     if len(names) > 1:
@@ -181,13 +189,13 @@ def dose(update, context):  # обработка введенного как д�
     context.user_data['result'] = result
     s = f"Название: {result[0][1]}\nФорма выпуска: {result[0][2]}\nДозировка: {result[0][3]}"
     update.message.reply_text(f"Вы хотите найти информацию об этом препарате?\n\n{s}",
-                              reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
-                                                               one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [['Да, все верно', 'Нет, начать сначала']],
+                                  one_time_keyboard=True))
     return 4
 
 
 def control(update, context):  # проверка на вывод инфы о препарате или о repeat
-    x = '-'
     text = update.message.text
     if text == 'Да, все верно':
         if 'fav_pharm' in context.user_data.keys() and context.user_data['fav_pharm'] is not None:
@@ -197,14 +205,12 @@ def control(update, context):  # проверка на вывод инфы о п
                 update.message.reply_text(
                     f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
                     f" {context.user_data['result'][0][3]} в вашей любимой аптеке\n"
-                    f"\n{context.user_data['fav_pharm'][1]}\n"
-                    f"Адрес: {context.user_data['fav_pharm'][2]}\n"
-                    f"Часы работы: {context.user_data['fav_pharm'][3] if context.user_data['fav_pharm'][3] is not None else x}\n"
-                    f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n"
+                    f"{pharmacy_format(context.user_data['fav_pharm'])}"
                     f"Цена: {cost_format(result[0][1])}",
                     reply_markup=ReplyKeyboardRemove())
             else:
-                update.message.reply_text("К сожалению в Вашей любимой аптеке нет интересующего Вас препарата.")
+                update.message.reply_text(
+                    "К сожалению в Вашей любимой аптеке нет интересующего Вас препарата.")
             update.message.reply_text("Хотите узнать о наличии препарата в других аптеках?",
                                       reply_markup=ReplyKeyboardMarkup(
                                           [['Нет, спасибо'], ['Да, в других аптеках моего города'],
@@ -228,17 +234,18 @@ def control(update, context):  # проверка на вывод инфы о п
         return 1
     else:
         update.message.reply_text("Так да или нет?",
-                                  reply_markup=ReplyKeyboardMarkup([['Да, все верно', 'Нет, начать сначала']],
-                                                                   one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(
+                                      [['Да, все верно', 'Нет, начать сначала']],
+                                      one_time_keyboard=True))
         return 4
 
 
 def dop_question(update, context):  # обработка на выдачу инфы в других аптеках
-    x = '-'
     text = update.message.text
     if text == 'Нет, спасибо':
-        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
-                                  reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text(
+            "Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
+            reply_markup=ReplyKeyboardRemove())
         context.user_data['log'] = True
         return 1
     elif text == 'Да, в других аптеках моего города':
@@ -249,21 +256,22 @@ def dop_question(update, context):  # обработка на выдачу ин�
         answer = ''
         for el in costs:
             s = list(filter(lambda x: x[0] == el[0], result))
-            s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}" \
-                f"\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+            s = f"{pharmacy_format(s[0])}" \
                 f"Цена: {cost_format(el[1])}\n\n"
             answer += s
         update.message.reply_text(
             f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
             f" {context.user_data['result'][0][3]}:\n"
             f"\n{answer}", reply_markup=ReplyKeyboardRemove())
-        update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
-                                  reply_markup=ReplyKeyboardMarkup(
-                                      [['Да'], ['Нет, спасибо']],
-                                      one_time_keyboard=True))
+        update.message.reply_text(
+            "Хотите узнать информацию о наличии препарата в аптеках других городов?",
+            reply_markup=ReplyKeyboardMarkup(
+                [['Да'], ['Нет, спасибо']],
+                one_time_keyboard=True))
         return 8
     elif text == 'Да, в аптеках другого города':
-        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Введите название интересующего Вас города.",
+                                  reply_markup=ReplyKeyboardRemove())
         return 5
     update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз",
                               reply_markup=ReplyKeyboardMarkup(
@@ -274,7 +282,6 @@ def dop_question(update, context):  # обработка на выдачу ин�
 
 
 def dop_question_city(update, context):  # выдавать ли инфу в других городах
-    x = '-'
     text = update.message.text
     if text == 'Да':
         result = pharmacy_ask(context.user_data['city'])
@@ -283,41 +290,41 @@ def dop_question_city(update, context):  # выдавать ли инфу в д�
         answer = ''
         for el in costs:
             s = list(filter(lambda x: x[0] == el[0], result))
-            s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}" \
-                f"\nАдрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+            s = f"{pharmacy_format(s[0])}" \
                 f"Цена: {cost_format(el[1])}\n\n"
             answer += s
         update.message.reply_text(
             f"По запросу {context.user_data['result'][0][1]}, {context.user_data['result'][0][2]},"
             f" {context.user_data['result'][0][3]}:\n"
             f"\n{answer}", reply_markup=ReplyKeyboardRemove())
-        update.message.reply_text("Хотите узнать информацию о наличии препарата в аптеках других городов?",
-                                  reply_markup=ReplyKeyboardMarkup(
-                                      [['Да'], ['Нет, спасибо']],
-                                      one_time_keyboard=True))
+        update.message.reply_text(
+            "Хотите узнать информацию о наличии препарата в аптеках других городов?",
+            reply_markup=ReplyKeyboardMarkup(
+                [['Да'], ['Нет, спасибо']],
+                one_time_keyboard=True))
         return 8
     elif text == 'Нет, в аптеках другого города':
-        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Введите название интересующего Вас города.",
+                                  reply_markup=ReplyKeyboardRemove())
         return 5
     update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз")
     return 7
 
 
 def city(update, context):  # выдать инфу по введенному названию города
-    x = '-'
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
-        update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
-                                  f"Если всё верно, значит я с этим городом не работаю :(")
+        update.message.reply_text(
+            f"Извините, такого города в моей базе нет, проверьте правильность написания. "
+            f"Если всё верно, значит я с этим городом не работаю :(")
         return 5
     pharmacy_id = [el[0] for el in result]
     costs = data_ask(tuple(pharmacy_id), context.user_data['result'][0][4])
     answer = ''
     for el in costs:
         s = list(filter(lambda x: x[0] == el[0], result))
-        s = f"* {s[0][1]}\nЧасы работы: {s[0][3] if s[0][3] is not None else x}\n" \
-            f"Адрес: {s[0][2]}\nТелефон: {phone_format(s[0][4])}\n" \
+        s = f"{pharmacy_format(s[0])}" \
             f"Цена: {cost_format(el[1])}\n\n"
         answer += s
     update.message.reply_text(
@@ -334,11 +341,13 @@ def city(update, context):  # выдать инфу по введенному н
 def other_city_or_repeat(update, context):  # разрешение на начало нового цикла общения
     text = update.message.text
     if text == 'Да':
-        update.message.reply_text("Введите название интересующего Вас города.", reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text("Введите название интересующего Вас города.",
+                                  reply_markup=ReplyKeyboardRemove())
         return 5
     elif text == 'Нет, спасибо':
-        update.message.reply_text("Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
-                                  reply_markup=ReplyKeyboardRemove())
+        update.message.reply_text(
+            "Хорошо. Если Вас интересует еще какой-нибудь препарат, введите его название.",
+            reply_markup=ReplyKeyboardRemove())
         context.user_data['log'] = True
         return 1
     update.message.reply_text("К сожалению я не понял Вас. Попробуйте еще раз")
@@ -361,16 +370,18 @@ def pharmacy_city(update, context):
     context.user_data['city'] = update.message.text
     result = pharmacy_ask(context.user_data['city'])
     if result == []:
-        update.message.reply_text(f"Извините, такого города в моей базе нет, проверьте правильность написания. "
-                                  f"Если всё верно, значит я с этим городом не работаю :(")
+        update.message.reply_text(
+            f"Извините, такого города в моей базе нет, проверьте правильность написания. "
+            f"Если всё верно, значит я с этим городом не работаю :(")
         return 1
     context.user_data['pharmacies'] = result
     pharmacies = '\n\n'.join(
         [str(i + 1) + '.  ' + result[i][1] + '\nАдрес: ' + result[i][2] for i in range(len(result))])
     buttons = [[str(i)] for i in range(len(result) + 1)]
-    update.message.reply_text(f'Выберите подходящую вам аптеку:\n\n0. Мне ничего не подходит...\n\n{pharmacies}',
-                              reply_markup=ReplyKeyboardMarkup(buttons,
-                                                               one_time_keyboard=True))
+    update.message.reply_text(
+        f'Выберите подходящую вам аптеку:\n\n0. Мне ничего не подходит...\n\n{pharmacies}',
+        reply_markup=ReplyKeyboardMarkup(buttons,
+                                         one_time_keyboard=True))
     return 2
 
 
@@ -405,24 +416,21 @@ def pharmacy_view(update, context):
     if 'fav_pharm' not in context.user_data.keys() or context.user_data['fav_pharm'] is None:
         update.message.reply_text(f"Вы не выбрали Вашу любимую аптеку...")
     else:
-        update.message.reply_text(f"Ваша любимая аптека:\n"
-                                  f"\n{context.user_data['fav_pharm'][1]}\n"
-                                  f"Адрес: {context.user_data['fav_pharm'][2]}\n"
-                                  f"Часы работы: "
-                                  f"{context.user_data['fav_pharm'][3] if context.user_data['fav_pharm'][3] is not None else x}\n"
-                                  f"Телефон: {phone_format(context.user_data['fav_pharm'][4])}\n")
+        update.message.reply_text(f"Ваша любимая аптека:\n\n"
+                                  f"{pharmacy_format(context.user_data['fav_pharm'])}")
 
 
 def help(update, context):
-    update.message.reply_text("Введите название лекарства, правильно ответьте на вопросы бота и узнайте, "
-                              "где можно купить интересующий Вас препарат.\nНа данный момент я знаю только лекарства, "
-                              "предназначенные для лечения заболевания респираторной системы (по классификации АТХ).\n"
-                              "Введите /set_favourite_pharmacy и выберите фаворитную аптеку. "
-                              "Бот будет выводить информацию по лекарствам прежде всего по этой аптеке.\n"
-                              "Введите /delete_favourite_pharmacy чтобы удалить любимую аптеку.\n"
-                              "Введите /view_favourite_pharmacy чтобы увидеть Вашу любимую аптеку.\n\n"
-                              "'Тут должно быть что-то умное и полезное'\n© подвал нашего сайта\n\n"
-                              "Коган Анна: Разработчик █████;\nМатевосян Артем: разработчик [ДАННЫЕ УДАЛЕНЫ].")
+    update.message.reply_text(
+        "Введите название лекарства, правильно ответьте на вопросы бота и узнайте, "
+        "где можно купить интересующий Вас препарат.\nНа данный момент я знаю только лекарства, "
+        "предназначенные для лечения заболевания респираторной системы (по классификации АТХ).\n"
+        "Введите /set_favourite_pharmacy и выберите фаворитную аптеку. "
+        "Бот будет выводить информацию по лекарствам прежде всего по этой аптеке.\n"
+        "Введите /delete_favourite_pharmacy чтобы удалить любимую аптеку.\n"
+        "Введите /view_favourite_pharmacy чтобы увидеть Вашу любимую аптеку.\n\n"
+        "'Тут должно быть что-то умное и полезное'\n© подвал нашего сайта\n\n"
+        "Коган Анна: Разработчик █████;\nМатевосян Артем: разработчик [ДАННЫЕ УДАЛЕНЫ].")
 
 
 def main_tg():

@@ -435,7 +435,7 @@ def help(update, context):
 
 def main_tg():
     REQUEST_KWARGS = {
-        'proxy_url': 'socks5://176.9.221.34:1080', }
+        'proxy_url': 'socks5://213.136.89.190:13006', }
 
     updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
                       request_kwargs=REQUEST_KWARGS)

@@ -16,6 +16,16 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 
 
+def city_format(city):
+    ch_map = {
+        ord('\t'): ' ',
+        ord('\n'): ' ',
+        ord('\r'): None
+    }
+    # print(city.translate(ch_map).rstrip().capitalize())
+    return city.translate(ch_map).rstrip().strip().capitalize()
+
+
 @login_manager.user_loader
 def load_user(pharmacy_id):
     db_session.global_init("db/pharmacy.db")
@@ -44,7 +54,7 @@ def reqister():
                                    message="Пользователь с таким логином существует. Придумайте другой логин")
         user = Pharmacy(
             name=form.name.data,
-            city=form.city.data.capitalize(),
+            city=city_format(form.city.data),
             address=form.address.data,
             hours=form.hours.data,
             phone=form.phone.data,
@@ -150,7 +160,7 @@ def edit_profile():
         if pharm:
             pharm.login = form.login.data
             pharm.name = form.name.data
-            pharm.city = form.city.data
+            pharm.city = city_format(form.city.data)
             pharm.address = form.address.data
             pharm.hours = form.hours.data
             pharm.phone = form.phone.data

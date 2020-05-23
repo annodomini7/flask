@@ -38,6 +38,11 @@ def main_site():
     app.run()
 
 
+@app.route('/suggestion')
+def suggestion():
+    return render_template('suggestion.html', title='Регистрация')
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def reqister():
     form = RegisterForm()

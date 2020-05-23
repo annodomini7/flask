@@ -20,5 +20,7 @@ class RegisterForm(FlaskForm):
             p = phonenumbers.parse(phone.data)
             if not phonenumbers.is_valid_number(p):
                 raise ValueError()
-        except (phonenumbers.phonenumberutil.NumberParseException, ValueError):
-            raise ValidationError('Invalid phone number')
+        except ValueError:
+            raise ValidationError('Некорректный номер телефона')
+        except phonenumbers.phonenumberutil.NumberParseException:
+            return

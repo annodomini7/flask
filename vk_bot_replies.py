@@ -98,9 +98,9 @@ class VkBotReplies:
                             f'Время работы: {i[3]}\n'
                             f'Адрес: {i[2]}\n'
                             f'Телефон: {i[4]}\n'
-                            f'Цена: {int(float(i[5].replace(",", ".")))} рублей '
+                            f'Цена: {int(float(i[5].replace(",", ".")))} руб. '
                             f'{int((float(i[5].replace(",", ".")) - int(float(i[5].replace(",", ".")))) * 100)} '
-                            f'копеек\nНайти на карте: https://maps.yandex.ru/?source=serp_navig&'
+                            f'коп.\nНайти на карте: https://maps.yandex.ru/?source=serp_navig&'
                             f'text={i[2].replace(",", r"%2C").replace(" ", "+")}'.replace("None", "неизвестно") for i in info])
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),

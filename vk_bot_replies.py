@@ -100,7 +100,7 @@ class VkBotReplies:
                             f'Телефон: {i[4]}\n'
                             f'Цена: {int(float(i[5].replace(",", ".")))} рублей '
                             f'{int((float(i[5].replace(",", ".")) - int(float(i[5].replace(",", ".")))) * 100)} '
-                            f'копеек\nhttps://maps.yandex.ru/?source=serp_navig&'
+                            f'копеек\nНайти на карте: https://maps.yandex.ru/?source=serp_navig&'
                             f'text={i[2].replace(",", r"%2C").replace(" ", "+")}'.replace("None", "неизвестно") for i in info])
         self.vk.messages.send(peer_id=send_to,
                               random_id=random.randint(0, 2 ** 64),

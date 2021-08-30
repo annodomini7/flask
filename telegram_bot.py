@@ -2,6 +2,7 @@ from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyKeyboardRemove
+from info import token_tg
 import sqlite3
 import re
 
@@ -434,11 +435,7 @@ def help(update, context):
 
 
 def main_tg():
-    REQUEST_KWARGS = {
-        'proxy_url': 'socks5://213.136.89.190:13006', }
-
-    updater = Updater("925371295:AAGqnKomvyfxqJmpqMppZ2ttO3zf0VUM818", use_context=True,
-                      request_kwargs=REQUEST_KWARGS)
+    updater = Updater(token_tg, use_context=True, )
     dp = updater.dispatcher
     pharmacy_conv_handler = ConversationHandler(
         entry_points=[CommandHandler('set_favourite_pharmacy', pharmacy_start)],
